@@ -1,0 +1,14 @@
+# Large data files - not committed to repo
+data/candidates.jsonl
+data/candidates.jsonl.gz
+
+# Python cache
+src/__pycache__/
+*.pyc
+*.pyo
+
+# VS Code settings
+.vscode/
+
+# Output (generated, not source)
+output/
