@@ -1,0 +1,55 @@
+team_name: "CrossSense"
+
+primary_contact:
+  name: "Hari Aditya Janapati"
+  email: "jhariaditya@gmail.com"
+  phone: "+91-XXXXXXXXXX"
+
+team_members:
+  - name: "Hari Aditya Janapati"
+    email: "jhariaditya@gmail.com"
+    role: "Team Lead"
+  - name: "Vurinindi Navadeep Kumar Reddy"
+    email: "navadeepv2005@gmail.com"
+    role: "ML Engineer"
+
+github_repo: "https://github.com/janapati2005/redrob-ranker"
+
+sandbox_link: "https://huggingface.co/spaces/janapati2005/redrob-ranker"
+
+reproduce_command: "python src/rank.py --candidates ./candidates.jsonl --out ./submission.csv"
+
+compute:
+  platform: "Windows 11, Intel/AMD CPU"
+  cpu_cores: 8
+  ram_gb: 16
+  python_version: "3.11"
+  os: "Windows 11"
+  uses_gpu_for_inference: false
+  has_network_during_ranking: false
+  pre_computation_required: false
+  pre_computation_time_minutes: 0
+
+ai_tools_used:
+  - "Claude"
+
+ai_usage_summary: |
+  Used Claude for architecture discussion, code review, and step-by-step
+  development guidance. All engineering decisions, debugging, and understanding
+  of the pipeline were done by the team. No candidate data was fed to
+  any LLM during ranking.
+
+methodology_summary: |
+  Rule-based hybrid ranker with 6 scoring components: skill depth (35%),
+  career trajectory (30%), experience fit (15%), location fit (10%), and
+  GitHub activity (10%). Availability applied as a multiplicative modifier
+  (0.4-1.0) based on last active date, recruiter response rate, open-to-work
+  flag, and notice period. Honeypot detection removes 108 impossible profiles
+  before scoring. Runtime: ~12 seconds for 100K candidates on CPU.
+
+declarations:
+  read_submission_spec: true
+  code_is_original_work: true
+  no_collusion: true
+  honeypot_check_done: true
+  reproduction_tested: true
