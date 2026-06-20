@@ -15,7 +15,7 @@ team_members:
 
 github_repo: "https://github.com/janapati2005/redrob-ranker"
 
-sandbox_link: "https://huggingface.co/spaces/janapati2005/redrob-ranker"
+sandbox_link: "https://redrob-ranker-hg7bjpsw4c6dzf6wixkbg8.streamlit.app/"
 
 reproduce_command: "python src/rank.py --candidates ./candidates.jsonl --out ./submission.csv"
 
