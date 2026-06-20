@@ -1,25 +1,43 @@
+# features.py
+# Extracts 6 scored signals from each candidate profile.
+# Each signal returns a float between 0.0 and 1.0.
+
 from datetime import date, datetime
+import math
+import re
 
-# ── JD-derived constants ─────────────────────────────────────────────────────
+TODAY = date.today()
 
-# Hard skills the JD explicitly requires (must-haves)
-CORE_SKILLS = {
+# ── Skill name normalization ───────────────────────────────────────────────────
+# Pre-compile regex once at module load — not on every function call
+_SKILL_NORMALIZE_RE = re.compile(r'[^a-z0-9\s]')
+
+def normalize_skill(name):
+    """Lowercase, remove punctuation — so 'sentence-transformers' matches 'sentence transformers'."""
+    return _SKILL_NORMALIZE_RE.sub('', name.lower()).strip()
+
+# ── JD-derived constants ───────────────────────────────────────────────────────
+CORE_SKILLS_RAW = {
     "embeddings", "sentence transformers", "vector database", "faiss", "pinecone",
-    "weaviate", "qdrant", "milvus", "opensearch", "elasticsearch", "information retrieval",
-    "semantic search", "hybrid search", "retrieval", "ranking", "recommendation",
-    "nlp", "python", "machine learning", "transformers", "hugging face transformers",
+    "weaviate", "qdrant", "milvus", "opensearch", "elasticsearch",
+    "information retrieval", "semantic search", "hybrid search",
+    "retrieval", "ranking", "recommendation", "nlp", "python",
+    "machine learning", "transformers", "hugging face transformers",
     "huggingface", "bge", "e5", "openai embeddings", "dense retrieval",
     "ndcg", "mrr", "map", "learning to rank", "xgboost", "lightgbm",
 }
 
-# Nice-to-have skills (bonus, not required)
-BONUS_SKILLS = {
+BONUS_SKILLS_RAW = {
     "lora", "qlora", "peft", "fine-tuning llms", "fine tuning", "mlflow",
-    "distributed systems", "kafka", "spark", "a/b testing", "feature engineering",
+    "distributed systems", "kafka", "spark", "ab testing", "feature engineering",
     "mlops", "pytorch", "tensorflow", "scikit-learn",
 }
 
-# Hard disqualifiers from the JD
+# Pre-normalize for fast matching
+CORE_SKILLS = {normalize_skill(s) for s in CORE_SKILLS_RAW}
+BONUS_SKILLS = {normalize_skill(s) for s in BONUS_SKILLS_RAW}
+
+# Hard disqualifier titles
 DISQUALIFIER_TITLES = {
     "marketing manager", "hr manager", "operations manager", "accountant",
     "content writer", "sales", "customer support", "civil engineer",
@@ -27,29 +45,29 @@ DISQUALIFIER_TITLES = {
     "finance", "graphic designer", "ui designer", "ux designer",
 }
 
+# Consulting/services companies
 DISQUALIFIER_COMPANIES = {
-    "tcs", "infosys", "wipro", "accenture", "cognizant", "capgemini",
-    "tech mahindra",
+    "tcs", "infosys", "wipro", "accenture", "cognizant",
+    "capgemini", "tech mahindra",
 }
 
-# Location fit — JD says Pune/Noida preferred, open to Hyderabad, Mumbai, Delhi NCR
+# Preferred locations from JD
 PREFERRED_LOCATIONS = {
-    "pune", "noida", "hyderabad", "mumbai", "delhi", "gurugram", "gurgaon",
-    "bengaluru", "bangalore", "chennai",
+    "pune", "noida", "hyderabad", "mumbai", "delhi", "gurugram",
+    "gurgaon", "bengaluru", "bangalore", "chennai",
 }
 
-TODAY = date.today()
 
-
-# ── Individual feature functions ──────────────────────────────────────────────
-
+# ── Feature 1: Skill Match ─────────────────────────────────────────────────────
 def skill_match_score(candidate):
     """
     Score 0-1 based on how well skills match JD requirements.
     Weights: proficiency level + endorsements + duration + assessment score.
     """
     skills = candidate.get("skills", [])
-    assessment_scores = candidate.get("redrob_signals", {}).get("skill_assessment_scores", {})
+    assessment_scores = candidate.get("redrob_signals", {}).get(
+        "skill_assessment_scores", {}
+    )
 
     if not skills:
         return 0.0
@@ -58,23 +76,27 @@ def skill_match_score(candidate):
     bonus_hits = 0.0
 
     for skill in skills:
-        name = skill["name"].lower().strip()
+        name = normalize_skill(skill["name"])
         proficiency = skill.get("proficiency", "beginner")
         endorsements = skill.get("endorsements", 0)
         duration = skill.get("duration_months", 0)
 
         # Proficiency weight
-        prof_weight = {"beginner": 0.25, "intermediate": 0.5, "advanced": 0.75, "expert": 1.0}
+        prof_weight = {
+            "beginner": 0.25,
+            "intermediate": 0.50,
+            "advanced": 0.75,
+            "expert": 1.0
+        }
         pw = prof_weight.get(proficiency, 0.25)
 
         # Endorsement weight (log-scaled, cap at 50)
-        import math
         ew = min(math.log1p(endorsements) / math.log1p(50), 1.0)
 
         # Duration weight (cap at 60 months = 5 years)
         dw = min(duration / 60.0, 1.0)
 
-        # Assessment score weight (if available)
+        # Assessment score weight
         aw = assessment_scores.get(skill["name"], -1)
         if aw >= 0:
             aw = aw / 100.0
@@ -89,18 +111,19 @@ def skill_match_score(candidate):
         elif name in BONUS_SKILLS:
             bonus_hits += strength * 0.4
 
-    # Normalize: assume 6 core skill matches is a perfect score
+    # Normalize: 6 core skill matches = perfect score
     core_score = min(core_hits / 6.0, 1.0)
     bonus_score = min(bonus_hits / 3.0, 1.0)
 
     return round(0.80 * core_score + 0.20 * bonus_score, 4)
 
 
+# ── Feature 2: Career Fit ──────────────────────────────────────────────────────
 def career_fit_score(candidate):
     """
     Score 0-1 based on career trajectory.
     Rewards: product company experience, ML/AI/search titles, right seniority.
-    Penalizes: pure consulting, wrong domain (CV, speech, robotics), title-hopping.
+    Penalizes: pure consulting, wrong domain, title-hopping.
     """
     career = candidate.get("career_history", [])
     profile = candidate.get("profile", {})
@@ -114,7 +137,7 @@ def career_fit_score(candidate):
     # Hard disqualifier: current title is completely wrong domain
     for bad_title in DISQUALIFIER_TITLES:
         if bad_title in current_title:
-            return 0.05  # near-zero, not absolute zero (in case of mislabeling)
+            return 0.05
 
     # Check if entire career is consulting-only
     all_consulting = all(
@@ -134,13 +157,12 @@ def career_fit_score(candidate):
     for job in career:
         title = job.get("title", "").lower()
         if any(kw in title for kw in good_title_keywords):
-            # Weight by duration
             months = job.get("duration_months", 0)
-            title_score += min(months / 24.0, 1.0)  # cap at 2-year contribution
+            title_score += min(months / 24.0, 1.0)
 
-    score += min(title_score / 3.0, 0.5)  # max 0.5 from title trajectory
+    score += min(title_score / 3.0, 0.5)
 
-    # Reward product company experience (non-consulting, non-services)
+    # Reward product company experience
     product_months = 0
     for job in career:
         company = job.get("company", "").lower()
@@ -150,9 +172,9 @@ def career_fit_score(candidate):
         if not is_consulting and not is_services:
             product_months += job.get("duration_months", 0)
 
-    score += min(product_months / 60.0, 0.4)  # max 0.4 from product company exp
+    score += min(product_months / 60.0, 0.4)
 
-    # Title-hopping penalty: >3 jobs in under 4 years is a flag
+    # Title-hopping penalty
     if len(career) >= 4:
         total_months = sum(j.get("duration_months", 0) for j in career[:4])
         if total_months < 48:
@@ -161,6 +183,7 @@ def career_fit_score(candidate):
     return round(max(0.0, min(score, 1.0)), 4)
 
 
+# ── Feature 3: Experience Fit ──────────────────────────────────────────────────
 def experience_fit_score(candidate):
     """
     Score 0-1 based on years of experience.
@@ -173,30 +196,28 @@ def experience_fit_score(candidate):
     elif yoe < 5:
         return 0.3
     elif 5 <= yoe <= 9:
-        # Peak at 6-8, slight penalty toward edges
         if 6 <= yoe <= 8:
             return 1.0
         else:
             return 0.8
     elif yoe <= 12:
-        return 0.5  # overqualified but not disqualified
+        return 0.5
     else:
-        return 0.3  # too senior for founding-team dynamics
+        return 0.3
 
 
+# ── Feature 4: Availability ────────────────────────────────────────────────────
 def availability_score(candidate):
     """
-    Score 0-1 based on behavioral signals — is this person actually reachable?
-    This is a MULTIPLIER concept: a great candidate who's unreachable is useless.
+    Score 0-1 based on behavioral signals.
+    Used as a MULTIPLIER — unreachable candidates get downweighted.
     """
     signals = candidate.get("redrob_signals", {})
     score = 0.0
 
-    # Open to work flag (strong signal)
     if signals.get("open_to_work_flag", False):
         score += 0.25
 
-    # Recent activity (logged in within last 60 days)
     last_active = signals.get("last_active_date", "")
     if last_active:
         try:
@@ -208,25 +229,18 @@ def availability_score(candidate):
                 score += 0.20
             elif days_inactive <= 60:
                 score += 0.10
-            else:
-                score += 0.0  # gone dark
         except Exception:
             pass
 
-    # Recruiter response rate
     rrr = signals.get("recruiter_response_rate", 0)
-    score += 0.25 * rrr  # direct linear contribution
+    score += 0.25 * rrr
 
-    # Notice period (JD wants sub-30 days; can buy out up to 30)
     notice = signals.get("notice_period_days", 90)
     if notice <= 30:
         score += 0.15
     elif notice <= 60:
         score += 0.08
-    else:
-        score += 0.0
 
-    # Verified contact details
     if signals.get("verified_email", False):
         score += 0.05
     if signals.get("verified_phone", False):
@@ -235,6 +249,7 @@ def availability_score(candidate):
     return round(min(score, 1.0), 4)
 
 
+# ── Feature 5: Location Fit ────────────────────────────────────────────────────
 def location_fit_score(candidate):
     """
     Score 0-1 based on location and relocation willingness.
@@ -246,24 +261,22 @@ def location_fit_score(candidate):
     country = profile.get("country", "").lower()
     willing_to_relocate = signals.get("willing_to_relocate", False)
 
-    # Outside India entirely — low fit (JD says India-preferred, no visa sponsorship)
     if country != "india":
         if willing_to_relocate:
             return 0.2
         return 0.05
 
-    # In preferred city
     for city in PREFERRED_LOCATIONS:
         if city in location:
             return 1.0
 
-    # Elsewhere in India + willing to relocate
     if willing_to_relocate:
         return 0.6
 
     return 0.3
 
 
+# ── Feature 6: GitHub ──────────────────────────────────────────────────────────
 def github_score(candidate):
     """
     Score 0-1 from GitHub activity.
@@ -273,22 +286,21 @@ def github_score(candidate):
     gh = signals.get("github_activity_score", -1)
 
     if gh == -1:
-        return 0.3  # no GitHub — neutral (not penalized heavily)
+        return 0.3
     return round(gh / 100.0, 4)
 
 
+# ── Master function ────────────────────────────────────────────────────────────
 def compute_all_features(candidate):
-    """
-    Returns a dict of all feature scores for one candidate.
-    """
+    """Returns a dict of all feature scores for one candidate."""
     return {
-        "candidate_id": candidate["candidate_id"],
-        "skill_match":      skill_match_score(candidate),
-        "career_fit":       career_fit_score(candidate),
-        "experience_fit":   experience_fit_score(candidate),
-        "availability":     availability_score(candidate),
-        "location_fit":     location_fit_score(candidate),
-        "github":           github_score(candidate),
+        "candidate_id":   candidate["candidate_id"],
+        "skill_match":    skill_match_score(candidate),
+        "career_fit":     career_fit_score(candidate),
+        "experience_fit": experience_fit_score(candidate),
+        "availability":   availability_score(candidate),
+        "location_fit":   location_fit_score(candidate),
+        "github":         github_score(candidate),
     }
 
 

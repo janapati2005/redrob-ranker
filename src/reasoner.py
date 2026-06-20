@@ -1,11 +1,6 @@
 # reasoner.py
-# Generates per-candidate reasoning text for the submission CSV.
-# Rules from submission spec Stage 4:
-#   - Must reference specific facts from the candidate's profile
-#   - Must connect to JD requirements
-#   - Must acknowledge gaps honestly
-#   - No hallucination — every claim must exist in the profile
-#   - Must vary across candidates (not templated)
+# Generates specific, honest, non-templated reasoning per candidate.
+# Stage 4 evaluation checks: specific facts, no hallucination, variation, tone matches rank.
 
 from datetime import date
 
@@ -28,19 +23,15 @@ CORE_SKILL_NAMES = {
 
 
 def _get_matching_core_skills(candidate):
-    """Returns list of core skills the candidate actually has."""
-    matches = []
-    for skill in candidate.get("skills", []):
-        name = skill["name"].lower()
-        if name in CORE_SKILL_NAMES:
-            matches.append(skill["name"])
-    return matches
+    skills = candidate.get("skills", [])
+    return [s["name"] for s in skills if s["name"].lower() in CORE_SKILL_NAMES]
 
 
 def _get_top_skills(candidate, n=3):
-    """Returns top N skills by combined strength."""
     skills = candidate.get("skills", [])
-    assessments = candidate.get("redrob_signals", {}).get("skill_assessment_scores", {})
+    assessments = candidate.get("redrob_signals", {}).get(
+        "skill_assessment_scores", {}
+    )
 
     def strength(s):
         prof = {"beginner": 1, "intermediate": 2, "advanced": 3, "expert": 4}
@@ -64,38 +55,6 @@ def _days_since_active(candidate):
         return 999
 
 
-def _career_summary(candidate):
-    """One-line summary of career trajectory."""
-    career = candidate.get("career_history", [])
-    profile = candidate.get("profile", {})
-
-    current_title = profile.get("current_title", "")
-    current_company = profile.get("current_company", "")
-    yoe = profile.get("years_of_experience", 0)
-
-    # Count product company months
-    product_companies = []
-    for job in career:
-        company = job.get("company", "").lower()
-        is_consulting = any(dc in company for dc in DISQUALIFIER_COMPANIES)
-        if not is_consulting and job.get("duration_months", 0) > 6:
-            product_companies.append(job.get("company", ""))
-
-    return current_title, current_company, yoe, product_companies[:3]
-
-
-def _notice_text(candidate):
-    notice = candidate.get("redrob_signals", {}).get("notice_period_days", 90)
-    if notice <= 15:
-        return f"immediately available (notice: {notice}d)"
-    elif notice <= 30:
-        return f"short notice period ({notice}d)"
-    elif notice <= 60:
-        return f"notice period of {notice} days"
-    else:
-        return f"long notice period ({notice}d) is a concern"
-
-
 def _location_text(candidate):
     profile = candidate.get("profile", {})
     location = profile.get("location", "")
@@ -111,13 +70,16 @@ def _location_text(candidate):
 
 def generate_reasoning(candidate, rank, score):
     """
-    Generates a specific, honest, non-templated 1-2 sentence reasoning.
-    The text is built from actual facts in the candidate's profile.
+    Generates specific, honest 1-2 sentence reasoning.
+    Every fact pulled from actual candidate data — no hallucination.
     """
     profile = candidate.get("profile", {})
     signals = candidate.get("redrob_signals", {})
 
-    title, company, yoe, product_cos = _career_summary(candidate)
+    title = profile.get("current_title", "")
+    company = profile.get("current_company", "")
+    yoe = profile.get("years_of_experience", 0)
+
     core_skills = _get_matching_core_skills(candidate)
     top_skills = _get_top_skills(candidate, n=3)
     days_inactive = _days_since_active(candidate)
@@ -126,9 +88,16 @@ def generate_reasoning(candidate, rank, score):
     open_to_work = signals.get("open_to_work_flag", False)
     location_text = _location_text(candidate)
 
-    # ── Build reasoning based on rank tier ────────────────────────────────────
+    # Product companies in career
+    career = candidate.get("career_history", [])
+    product_cos = []
+    for job in career:
+        c = job.get("company", "").lower()
+        is_consulting = any(dc in c for dc in DISQUALIFIER_COMPANIES)
+        if not is_consulting and job.get("duration_months", 0) > 6:
+            product_cos.append(job.get("company", ""))
 
-    # TOP TIER (rank 1-10): strong match, lead with strengths
+    # ── TOP TIER (rank 1-10) ───────────────────────────────────────────────
     if rank <= 10:
         skill_part = ""
         if core_skills:
@@ -148,10 +117,10 @@ def generate_reasoning(candidate, rank, score):
         elif rrr < 0.3:
             concern = f" Concern: low recruiter response rate ({rrr:.0%})."
 
-        sentence1 = f"{title} with {yoe:.1f} years {skill_part}{product_part}, {location_text}."
-        sentence2 = f"Strong alignment with JD's retrieval/ranking mandate.{concern}"
+        s1 = f"{title} with {yoe:.1f} years {skill_part}{product_part}, {location_text}."
+        s2 = f"Strong alignment with JD retrieval/ranking mandate.{concern}"
 
-    # GOOD FIT (rank 11-30): solid match with some gaps
+    # ── GOOD FIT (rank 11-30) ──────────────────────────────────────────────
     elif rank <= 30:
         skill_part = ""
         if core_skills:
@@ -163,49 +132,48 @@ def generate_reasoning(candidate, rank, score):
         if days_inactive > 60:
             concern = f"inactive {days_inactive} days"
         elif notice > 90:
-            concern = f"{notice}-day notice"
+            concern = f"{notice}-day notice period"
         elif not open_to_work:
             concern = "not marked open to work"
 
-        sentence1 = f"{yoe:.1f}-year {title} at {company} with {skill_part}, {location_text}."
+        s1 = f"{yoe:.1f}-year {title} at {company} with {skill_part}, {location_text}."
         if concern:
-            sentence2 = f"Decent JD alignment but {concern} reduces effective availability."
+            s2 = f"Solid JD alignment but {concern} reduces effective availability."
         else:
-            sentence2 = f"Moderate JD alignment; experience range fits but skill depth below top tier."
+            s2 = f"Good JD alignment; skill depth slightly below top tier."
 
-    # BORDERLINE (rank 31-70): adjacent skills or wrong domain
+    # ── BORDERLINE (rank 31-70) ────────────────────────────────────────────
     elif rank <= 70:
         gap = ""
         if not core_skills:
-            gap = "no direct retrieval/ranking skills in profile"
+            gap = "no direct retrieval/ranking skills confirmed in profile"
         elif yoe < 5:
-            gap = f"only {yoe:.1f} years experience (JD wants 5-9)"
+            gap = f"only {yoe:.1f} years experience (JD requires 5-9)"
         elif days_inactive > 90:
-            gap = f"inactive for {days_inactive} days"
+            gap = f"platform inactive for {days_inactive} days"
         else:
-            gap = "partial skill overlap with JD requirements"
+            gap = "partial skill overlap with JD core requirements"
 
-        sentence1 = f"{title} at {company} ({yoe:.1f} yrs), {location_text}."
-        sentence2 = f"Adjacent profile — {gap}; included given limited stronger alternatives at this rank."
+        s1 = f"{title} at {company} ({yoe:.1f} yrs), {location_text}."
+        s2 = f"Adjacent profile — {gap}; included ahead of weaker alternatives."
 
-    # WEAK FIT (rank 71-100): filler, honest about it
+    # ── WEAK FIT (rank 71-100) ─────────────────────────────────────────────
     else:
-        reason = ""
         if not core_skills:
-            reason = "no core retrieval/ML skills match the JD"
+            reason = f"no core retrieval or ML skills verified in profile"
         elif yoe < 3:
-            reason = f"only {yoe:.1f} years experience, below JD minimum"
+            reason = f"only {yoe:.1f} years total experience, below JD minimum of 5"
+        elif title.lower() in {"marketing manager", "hr manager", "accountant",
+                                "operations manager", "customer support"}:
+            reason = f"domain mismatch — {title} role outside AI/ML scope"
         else:
-            reason = "title and career trajectory misaligned with JD requirements"
+            reason = "career trajectory and skill depth below shortlist threshold"
 
-        sentence1 = f"{title} at {company} ({yoe:.1f} yrs), {location_text}."
-        sentence2 = f"Weak fit — {reason}; ranked here to complete top-100 requirement."
+        s1 = f"{title} at {company} ({yoe:.1f} yrs), {location_text}."
+        s2 = f"Below shortlist threshold — {reason}; lowest-scoring inclusion in top-100."
 
-    # Combine and clean up whitespace
-    reasoning = f"{sentence1} {sentence2}".strip()
-    reasoning = " ".join(reasoning.split())  # collapse any double spaces
-
-    return reasoning
+    reasoning = f"{s1} {s2}".strip()
+    return " ".join(reasoning.split())
 
 
 if __name__ == "__main__":
@@ -227,7 +195,6 @@ if __name__ == "__main__":
         print(f"  {reasoning}")
         print()
 
-    print("...")
     total = len(ranked)
     for i, r in enumerate(ranked[-3:], total - 2):
         cid = r["candidate_id"]
