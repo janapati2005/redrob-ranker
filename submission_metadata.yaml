@@ -1,3 +1,7 @@
+# Redrob Hackathon — Submission Metadata
+# Team CrossSense
+
+# ── Team Identity ──────────────────────────────────────────────────────────────
 team_name: "CrossSense"
 
 primary_contact:
@@ -13,14 +17,16 @@ team_members:
     email: "navadeepv2005@gmail.com"
     role: "ML Engineer"
 
+# ── Code and Reproducibility ───────────────────────────────────────────────────
 github_repo: "https://github.com/janapati2005/redrob-ranker"
 
 sandbox_link: "https://redrob-ranker-hg7bjpsw4c6dzf6wixkbg8.streamlit.app/"
 
 reproduce_command: "python src/rank.py --candidates ./candidates.jsonl --out ./submission.csv"
 
+# ── Compute Environment ────────────────────────────────────────────────────────
 compute:
-  platform: "Windows 11, Intel/AMD CPU"
+  platform: "Windows 11, Intel CPU"
   cpu_cores: 8
   ram_gb: 16
   python_version: "3.11"
@@ -30,23 +36,40 @@ compute:
   pre_computation_required: false
   pre_computation_time_minutes: 0
 
+# ── AI Tools Declaration ───────────────────────────────────────────────────────
 ai_tools_used:
   - "Claude"
 
 ai_usage_summary: |
   Used Claude for architecture discussion, code review, and step-by-step
   development guidance. All engineering decisions, debugging, and understanding
-  of the pipeline were done by the team. No candidate data was fed to
-  any LLM during ranking.
+  of the pipeline were done by the team. No candidate data was fed to any LLM
+  during ranking. All scoring is done locally with no API calls.
 
+# ── Approach Summary ───────────────────────────────────────────────────────────
 methodology_summary: |
-  Rule-based hybrid ranker with 6 scoring components: skill depth (35%),
-  career trajectory (30%), experience fit (15%), location fit (10%), and
-  GitHub activity (10%). Availability applied as a multiplicative modifier
-  (0.4-1.0) based on last active date, recruiter response rate, open-to-work
-  flag, and notice period. Honeypot detection removes 108 impossible profiles
-  before scoring. Runtime: ~12 seconds for 100K candidates on CPU.
+  Rule-based hybrid ranker with 6 scoring components combined with a
+  behavioral availability multiplier.
 
+  Scoring weights derived from JD priority analysis:
+    - Skill Match (35%): proficiency level, endorsements, duration, assessment scores
+    - Career Trajectory (30%): title alignment, product company experience, consulting penalty
+    - Experience Fit (15%): years of experience vs JD requirement of 5 to 9 years
+    - Location Fit (10%): India preferred, Pune and Noida ideal
+    - GitHub Activity (10%): open source contribution score
+    - Availability (multiplier 0.40 to 1.00): last active, response rate, notice period
+
+  Skill names normalized for punctuation-insensitive matching so that
+  sentence-transformers correctly matches sentence transformers.
+
+  Honeypot detection removes 108 impossible profiles before scoring by
+  checking for expert skill with zero months usage, experience exceeding
+  career history by more than 3 years, and out-of-range signal values.
+
+  Tiebreaker: candidate_id ascending, matching competition validator rule.
+  Runtime: 13 seconds for 100,000 candidates on CPU with no GPU.
+
+# ── Declarations ───────────────────────────────────────────────────────────────
 declarations:
   read_submission_spec: true
   code_is_original_work: true
