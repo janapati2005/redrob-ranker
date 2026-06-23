@@ -243,8 +243,8 @@ with c3:
 st.markdown("<br>", unsafe_allow_html=True)
 
 uploaded_file = st.file_uploader(
-    "Upload candidates JSON file",
-    type=["json"],
+    "Upload candidates file",
+    type=["json", "jsonl", "gz"],
     label_visibility="collapsed"
 )
 
@@ -306,9 +306,25 @@ else:
             tmp.write(uploaded_file.read())
             tmp_path = tmp.name
 
-        with open(tmp_path, 'r', encoding='utf-8') as f:
-            candidates = json.load(f)
-
+        import gzip
+        fname = uploaded_file.name.lower()
+        if fname.endswith('.gz'):
+            candidates = []
+            with gzip.open(tmp_path, 'rt', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if line:
+                        candidates.append(json.loads(line))
+        elif fname.endswith('.jsonl'):
+            candidates = []
+            with open(tmp_path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if line:
+                        candidates.append(json.loads(line))
+        else:
+            with open(tmp_path, 'r', encoding='utf-8') as f:
+                candidates = json.load(f)
         from bm25_retriever import get_bm25_shortlist
         from embedder import SemanticScorer
 
