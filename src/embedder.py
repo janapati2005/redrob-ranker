@@ -145,13 +145,21 @@ class SemanticScorer:
         # Normalize to 0-1 range
         # cosine similarity is already -1 to 1, but for job descriptions
         # all scores will be positive (0 to 1) since content is related
-        min_sim = float(similarities.min())
-        max_sim = float(similarities.max())
-        score_range = max_sim - min_sim if max_sim > min_sim else 1.0
+        results = []
+        for candidate, sim in zip(candidates, similarities):
+            # Raw cosine similarity is already 0-1 for related text
+            # Clamp to [0, 1] instead of min-max normalizing against the batch
+            normalized = float(max(0.0, min(1.0, sim)))
+            results.append({
+                "candidate": candidate,
+                "semantic_score": round(normalized, 6),
+                "raw_similarity": round(float(sim), 6)
+            })
+
 
         results = []
         for candidate, sim in zip(candidates, similarities):
-            normalized = (float(sim) - min_sim) / score_range
+            normalized = float(max(0.0, min(1.0, sim)))
             results.append({
                 "candidate": candidate,
                 "semantic_score": round(normalized, 6),

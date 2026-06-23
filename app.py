@@ -11,8 +11,6 @@ from loader import load_candidates
 from honeypot import filter_honeypots
 from scorer import score_all
 from reasoner import generate_reasoning
-from bm25_retriever import get_bm25_shortlist
-from embedder import SemanticScorer
 
 st.set_page_config(
     page_title="CrossSense — Candidate Ranker",
@@ -310,6 +308,9 @@ else:
 
         with open(tmp_path, 'r', encoding='utf-8') as f:
             candidates = json.load(f)
+
+        from bm25_retriever import get_bm25_shortlist
+        from embedder import SemanticScorer
 
         BM25_K = 1500
 
