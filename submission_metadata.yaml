@@ -48,26 +48,43 @@ ai_usage_summary: |
 
 # ── Approach Summary ───────────────────────────────────────────────────────────
 methodology_summary: |
-  Rule-based hybrid ranker with 6 scoring components combined with a
-  behavioral availability multiplier.
+  Hybrid two-stage ranker: BM25 retrieval → semantic embeddings → 9-signal
+  weighted scoring with a behavioral availability multiplier.
 
-  Scoring weights derived from JD priority analysis:
-    - Skill Match (35%): proficiency level, endorsements, duration, assessment scores
-    - Career Trajectory (30%): title alignment, product company experience, consulting penalty
-    - Experience Fit (15%): years of experience vs JD requirement of 5 to 9 years
-    - Location Fit (10%): India preferred, Pune and Noida ideal
-    - GitHub Activity (10%): open source contribution score
-    - Availability (multiplier 0.40 to 1.00): last active, response rate, notice period
+  Stage 1 — BM25 retrieval (rank-bm25):
+    Shortlists top 1500 candidates from 100k using JD text query.
+    Accounts for term frequency and document length (same as Elasticsearch).
+
+  Stage 2 — Semantic scoring (sentence-transformers all-MiniLM-L6-v2):
+    Encodes JD and candidate profiles into 384-dimensional vectors.
+    Cosine similarity captures meaning-level JD alignment beyond keyword overlap.
+
+  Stage 3 — 9-signal weighted scoring:
+    Skill Match     (27%) — proficiency level, endorsements, duration, assessment scores
+    Career Fit      (24%) — title alignment, product company experience, consulting penalty
+    Semantic        (15%) — sentence-transformer cosine similarity against JD
+    Experience Fit  (10%) — years of experience vs JD requirement of 5 to 9 years
+    Location Fit    ( 8%) — India preferred, Pune and Noida ideal
+    Platform Demand ( 6%) — recruiter saves, search appearances, profile completeness
+    GitHub Activity ( 5%) — open source contribution score
+    Education       ( 3%) — institution tier and field relevance
+    Profile Quality ( 2%) — connections, LinkedIn, interview and offer acceptance rates
+    Availability    (multiplier 0.40 to 1.00) — last active, response rate, notice period
 
   Skill names normalized for punctuation-insensitive matching so that
   sentence-transformers correctly matches sentence transformers.
 
-  Honeypot detection removes 108 impossible profiles before scoring by
-  checking for expert skill with zero months usage, experience exceeding
-  career history by more than 3 years, and out-of-range signal values.
+  Career fit guard: wrong-domain candidates (career_fit <= 0.05) have their
+  semantic score zeroed to prevent irrelevant profiles being rescued by
+  embedding similarity alone.
+
+  Honeypot detection removes impossible profiles before scoring by checking:
+    - Expert skill with zero months usage
+    - Experience exceeding career history by more than 3 years
+    - Out-of-range signal values (acceptance rate > 1.0, etc.)
 
   Tiebreaker: candidate_id ascending, matching competition validator rule.
-  Runtime: 13 seconds for 100,000 candidates on CPU with no GPU.
+  runtime seconds on 100k: "~90-150 seconds on CPU (varies by machine)"
 
 # ── Declarations ───────────────────────────────────────────────────────────────
 declarations:
