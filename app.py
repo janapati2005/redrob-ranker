@@ -253,7 +253,7 @@ st.markdown("""
     <div class="hero-badge">⚡ Team CrossSense · Redrob AI Hackathon 2026</div>
     <h1>Intelligent Candidate Ranker</h1>
     <p>Upload any candidate pool and get AI-powered rankings in seconds.<br>
-    Multi-signal scoring · Honeypot detection · Behavioral availability analysis</p>
+    9-signal scoring · Honeypot detection · Behavioral availability analysis</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -269,7 +269,7 @@ with c2:
     st.markdown("""<div class="step-card">
         <div class="step-icon">🧠</div>
         <div class="step-title">Analyze</div>
-        <div class="step-desc">6-signal scoring across skills, career, experience, availability & location</div>
+        <div class="step-desc">9-signal scoring across skills, career, experience, GitHub, platform demand, education & more</div>
     </div>""", unsafe_allow_html=True)
 with c3:
     st.markdown("""<div class="step-card">
@@ -291,27 +291,43 @@ if not uploaded_file:
     st.markdown("""
     <div class="signal-table" style="margin-top:8px">
         <div style="font-size:1.05rem;font-weight:700;color:#1a1a2e;margin-bottom:16px">
-            📊 How candidates are scored
+            📊 How candidates are scored — 9 signals
         </div>
         <div class="signal-row">
-            <span class="signal-name">🎯 Skill Match — depth of relevant skills</span>
-            <span class="signal-weight">35%</span>
+            <span class="signal-name">🎯 Skill Match — depth and relevance of skills vs JD</span>
+            <span class="signal-weight">27%</span>
         </div>
         <div class="signal-row">
-            <span class="signal-name">💼 Career Trajectory — title, company, domain</span>
-            <span class="signal-weight">30%</span>
+            <span class="signal-name">💼 Career Fit — title, domain, product company history</span>
+            <span class="signal-weight">24%</span>
         </div>
         <div class="signal-row">
-            <span class="signal-name">📅 Experience Fit — JD wants 5-9 years</span>
+            <span class="signal-name">🔗 Semantic Similarity — embedding match against JD</span>
             <span class="signal-weight">15%</span>
         </div>
         <div class="signal-row">
-            <span class="signal-name">📍 Location Fit — India, Pune/Noida/Hyderabad preferred</span>
+            <span class="signal-name">📅 Experience Fit — JD wants 5–9 years</span>
             <span class="signal-weight">10%</span>
         </div>
         <div class="signal-row">
+            <span class="signal-name">📍 Location Fit — India preferred, Pune/Noida/Hyderabad ideal</span>
+            <span class="signal-weight">8%</span>
+        </div>
+        <div class="signal-row">
+            <span class="signal-name">📈 Platform Demand — recruiter saves, search appearances</span>
+            <span class="signal-weight">6%</span>
+        </div>
+        <div class="signal-row">
             <span class="signal-name">💻 GitHub Activity — open source contributions</span>
-            <span class="signal-weight">10%</span>
+            <span class="signal-weight">5%</span>
+        </div>
+        <div class="signal-row">
+            <span class="signal-name">🎓 Education — institution tier and field relevance</span>
+            <span class="signal-weight">3%</span>
+        </div>
+        <div class="signal-row">
+            <span class="signal-name">✅ Profile Quality — completeness, connections, acceptance rate</span>
+            <span class="signal-weight">2%</span>
         </div>
         <div class="signal-row">
             <span class="signal-name">⚡ Availability — last active, response rate, notice period</span>
@@ -411,17 +427,18 @@ else:
                     </div>
                     """, unsafe_allow_html=True)
 
+                    # All 9 signals + availability multiplier
                     signals = [
-                        ("🎯 Skill Match", f["skill_match"],
-                         "linear-gradient(90deg,#7c3aed,#a855f7)"),
-                        ("💼 Career Fit", f["career_fit"],
-                         "linear-gradient(90deg,#a855f7,#ec4899)"),
-                        ("📅 Experience", f["experience_fit"],
-                         "linear-gradient(90deg,#10b981,#34d399)"),
-                        ("⚡ Availability", f["availability"],
-                         "linear-gradient(90deg,#f59e0b,#fbbf24)"),
-                        ("📍 Location", f["location_fit"],
-                         "linear-gradient(90deg,#3b82f6,#60a5fa)"),
+                        ("🎯 Skill Match",       f.get("skill_match", 0),       "linear-gradient(90deg,#7c3aed,#a855f7)"),
+                        ("💼 Career Fit",         f.get("career_fit", 0),         "linear-gradient(90deg,#a855f7,#ec4899)"),
+                        ("🔗 Semantic",           f.get("semantic", 0),           "linear-gradient(90deg,#8b5cf6,#7c3aed)"),
+                        ("📅 Experience",         f.get("experience_fit", 0),     "linear-gradient(90deg,#10b981,#34d399)"),
+                        ("📍 Location",           f.get("location_fit", 0),       "linear-gradient(90deg,#3b82f6,#60a5fa)"),
+                        ("📈 Platform Demand",    f.get("platform_demand", 0),    "linear-gradient(90deg,#f97316,#fb923c)"),
+                        ("💻 GitHub",             f.get("github", 0),             "linear-gradient(90deg,#0f172a,#334155)"),
+                        ("🎓 Education",          f.get("education", 0),          "linear-gradient(90deg,#0ea5e9,#38bdf8)"),
+                        ("✅ Profile Quality",    f.get("profile_quality", 0),    "linear-gradient(90deg,#14b8a6,#2dd4bf)"),
+                        ("⚡ Availability",       f.get("availability", 0),       "linear-gradient(90deg,#f59e0b,#fbbf24)"),
                     ]
                     for label, val, grad in signals:
                         pct = int(val * 100)
@@ -464,10 +481,10 @@ else:
                     pills_html = ""
                     for s in skills:
                         colors = {
-                            "expert": ("ede9fe", "7c3aed"),
-                            "advanced": ("fce7f3", "be185d"),
+                            "expert":       ("ede9fe", "7c3aed"),
+                            "advanced":     ("fce7f3", "be185d"),
                             "intermediate": ("d1fae5", "065f46"),
-                            "beginner": ("f3f4f6", "6b7280")
+                            "beginner":     ("f3f4f6", "6b7280")
                         }
                         bg, fg = colors.get(
                             s.get("proficiency", "beginner"),
