@@ -180,8 +180,11 @@ header {visibility: hidden;}
 # ── Cache the semantic model — only loads once per session ────────────────────
 @st.cache_resource
 def load_semantic_model():
-    from embedder import SemanticScorer
-    return SemanticScorer()
+    try:
+        from embedder import SemanticScorer
+        return SemanticScorer()
+    except Exception:
+        return None
 
 # ── Hero ──────────────────────────────────────────────────────────────────────
 st.markdown("""
@@ -322,13 +325,17 @@ else:
             shortlisted = clean
 
         # Semantic — cached model
-        progress.progress(40, text="Stage 2 — Semantic scoring (loading model, please wait)...")
+        progress.progress(40, text="Stage 2 — Semantic scoring...")
         scorer_obj = load_semantic_model()
-        sem_results = scorer_obj.score_candidates(shortlisted)
-        semantic_scores = {
-            r["candidate"]["candidate_id"]: r["semantic_score"]
-            for r in sem_results
-        }
+        semantic_scores = {}
+        if scorer_obj is not None:
+            sem_results = scorer_obj.score_candidates(shortlisted)
+            semantic_scores = {
+                r["candidate"]["candidate_id"]: r["semantic_score"]
+                for r in sem_results
+            }
+        else:
+            st.info("Running in fast mode — semantic scoring unavailable on cloud. Download the full result locally for semantic-enhanced rankings.")
 
         # Feature scoring
         progress.progress(80, text="Stage 3 — Full feature scoring and ranking...")
