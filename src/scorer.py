@@ -1,19 +1,4 @@
-# scorer.py — UPGRADED
-# Combines all 9 feature scores into one final score.
-# semantic score comes from embedder.py (Stage 2 of pipeline).
-# availability is a multiplier — not a direct weight.
-#
-# Weight reasoning:
-# skill_match (27%)  — JD names exact tools, technical fit is primary gate
-# career_fit (24%)   — JD explicitly warns about keyword stuffers
-# experience_fit (10%) — years matter but what you did matters more
-# semantic (15%)     — meaning-level JD match from sentence-transformers
-# location_fit (8%)  — important but solvable with relocation
-# platform_demand (6%) — crowd-sourced recruiter validation
-# github (5%)        — JD calls it a strong positive signal
-# education (3%)     — tier_1 education is a differentiator for founding team
-# profile_quality (2%) — engagement and credibility signal
-
+# scorer.py
 from features import compute_all_features
 
 WEIGHTS = {
@@ -30,25 +15,15 @@ WEIGHTS = {
 
 
 def compute_score(candidate, semantic_score=0.0):
-    """
-    Returns final score (0.0 - 1.0) for one candidate.
-    semantic_score comes from the embedder (0.0 if not available).
-    Availability is a multiplier — poor availability scales down entire score.
-    """
     f = compute_all_features(candidate)
 
-    # Career fit guard — wrong domain candidates cannot be rescued by semantic
     effective_semantic = semantic_score
     if f["career_fit"] <= 0.05:
         effective_semantic = 0.0
     f["semantic"] = effective_semantic
 
-    # Weighted base score
     base = sum(WEIGHTS[k] * f[k] for k in WEIGHTS)
-
-    # Availability multiplier: 0.40 floor means inactive != worthless
     multiplier = 0.40 + 0.60 * f["availability"]
-
     final = round(base * multiplier, 6)
 
     return {
@@ -60,10 +35,6 @@ def compute_score(candidate, semantic_score=0.0):
 
 
 def score_all(candidates, semantic_scores=None):
-    """
-    Scores all candidates and returns them sorted best-first.
-    Tiebreaker: candidate_id ascending (matches competition validator rule).
-    """
     if semantic_scores is None:
         semantic_scores = {}
 

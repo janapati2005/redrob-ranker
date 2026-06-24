@@ -3,6 +3,7 @@ import json
 import tempfile
 import os
 import sys
+import gzip
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent / "src"))
@@ -37,41 +38,9 @@ header {visibility: hidden;}
     padding: 56px 48px;
     margin-bottom: 32px;
     text-align: center;
-    box-shadow: 0 20px 60px rgba(124, 58, 237, 0.25);
+    box-shadow: 0 20px 60px rgba(124,58,237,0.25);
     position: relative;
     overflow: hidden;
-}
-.hero::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -20%;
-    width: 60%;
-    height: 200%;
-    background: rgba(255,255,255,0.06);
-    border-radius: 50%;
-}
-.hero::after {
-    content: '';
-    position: absolute;
-    bottom: -30%;
-    right: -10%;
-    width: 40%;
-    height: 150%;
-    background: rgba(255,255,255,0.04);
-    border-radius: 50%;
-}
-.hero-badge {
-    display: inline-block;
-    background: rgba(255,255,255,0.2);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.3);
-    border-radius: 30px;
-    padding: 6px 20px;
-    font-size: 0.82rem;
-    color: #fff;
-    margin-bottom: 20px;
-    letter-spacing: 0.5px;
 }
 .hero h1 {
     font-size: 3rem;
@@ -85,6 +54,16 @@ header {visibility: hidden;}
     font-size: 1.05rem;
     margin: 0;
     line-height: 1.6;
+}
+.hero-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 30px;
+    padding: 6px 20px;
+    font-size: 0.82rem;
+    color: #fff;
+    margin-bottom: 20px;
 }
 .step-card {
     background: #ffffff;
@@ -160,6 +139,32 @@ header {visibility: hidden;}
     font-weight: 500;
     margin: 3px 3px 3px 0;
 }
+.stat-box {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 16px 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    border: 1px solid rgba(124,58,237,0.08);
+    margin-bottom: 12px;
+}
+.stat-box-title {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #9ca3af;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 0.84rem;
+}
+.stat-row:last-child { border-bottom: none; }
+.stat-key { color: #6b7280; }
+.stat-val { font-weight: 600; color: #1a1a2e; }
 .signal-table {
     background: #ffffff;
     border-radius: 16px;
@@ -183,65 +188,43 @@ header {visibility: hidden;}
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
-.stat-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 0;
-    border-bottom: 1px solid #f3f4f6;
-    font-size: 0.85rem;
-}
-.stat-row:last-child { border-bottom: none; }
-.stat-key { color: #6b7280; }
-.stat-val { font-weight: 600; color: #1a1a2e; }
-.info-card {
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 16px 20px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
-    border: 1px solid rgba(124,58,237,0.08);
-    margin-bottom: 14px;
-}
-.info-card-title {
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: #9ca3af;
-    margin-bottom: 8px;
-}
 </style>
 """, unsafe_allow_html=True)
 
+# ── Hero ──────────────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="hero">
     <div class="hero-badge">⚡ Team CrossSense · Redrob AI Hackathon 2026</div>
     <h1>Intelligent Candidate Ranker</h1>
     <p>Upload any candidate pool and get AI-powered rankings in seconds.<br>
-    9-signal scoring · BM25 + Semantic retrieval · Honeypot detection</p>
+    BM25 retrieval · Semantic embeddings · 9-signal behavioral scoring</p>
 </div>
 """, unsafe_allow_html=True)
 
+# ── Step cards ────────────────────────────────────────────────────────────────
 c1, c2, c3 = st.columns(3)
 with c1:
     st.markdown("""<div class="step-card">
         <div class="step-icon">📂</div>
         <div class="step-title">Upload</div>
-        <div class="step-desc">Drop any candidates JSON file — sample or full 100k pool (up to 2 GB)</div>
+        <div class="step-desc">Drop any candidates JSON file — sample or full 100k pool</div>
     </div>""", unsafe_allow_html=True)
 with c2:
     st.markdown("""<div class="step-card">
         <div class="step-icon">🧠</div>
         <div class="step-title">Analyze</div>
-        <div class="step-desc">BM25 retrieval → semantic embeddings → 9-signal weighted scoring</div>
+        <div class="step-desc">BM25 retrieval then semantic embeddings then 9-signal weighted scoring</div>
     </div>""", unsafe_allow_html=True)
 with c3:
     st.markdown("""<div class="step-card">
         <div class="step-icon">🏆</div>
         <div class="step-title">Rank</div>
-        <div class="step-desc">Top 10 shortlist with per-candidate signal breakdown and reasoning</div>
+        <div class="step-desc">Top candidates with full signal breakdown, reasoning, and download</div>
     </div>""", unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
+# ── Upload ────────────────────────────────────────────────────────────────────
 uploaded_file = st.file_uploader(
     "Upload candidates file",
     type=["json", "jsonl", "gz"],
@@ -252,26 +235,26 @@ if not uploaded_file:
     st.markdown("""
     <div class="signal-table" style="margin-top:8px">
         <div style="font-size:1.05rem;font-weight:700;color:#1a1a2e;margin-bottom:16px">
-            📊 How candidates are scored — 9 signals
+            📊 Scoring system — 9 signals + availability multiplier
         </div>
         <div class="signal-row">
-            <span class="signal-name">🎯 Skill Match — depth and relevance of skills vs JD</span>
+            <span class="signal-name">🎯 Skill Match — proficiency, endorsements, duration, assessment</span>
             <span class="signal-weight">27%</span>
         </div>
         <div class="signal-row">
-            <span class="signal-name">💼 Career Fit — title, domain, product company history</span>
+            <span class="signal-name">💼 Career Fit — title, domain, product company, consulting penalty</span>
             <span class="signal-weight">24%</span>
         </div>
         <div class="signal-row">
-            <span class="signal-name">🔗 Semantic Similarity — sentence-transformer embedding match</span>
+            <span class="signal-name">🔗 Semantic Similarity — sentence-transformer JD embedding match</span>
             <span class="signal-weight">15%</span>
         </div>
         <div class="signal-row">
-            <span class="signal-name">📅 Experience Fit — JD wants 5–9 years</span>
+            <span class="signal-name">📅 Experience Fit — JD wants 5 to 9 years, sweet spot 6 to 8</span>
             <span class="signal-weight">10%</span>
         </div>
         <div class="signal-row">
-            <span class="signal-name">📍 Location Fit — India preferred, Pune/Noida/Hyderabad ideal</span>
+            <span class="signal-name">📍 Location Fit — India preferred, Pune and Noida ideal</span>
             <span class="signal-weight">8%</span>
         </div>
         <div class="signal-row">
@@ -279,7 +262,7 @@ if not uploaded_file:
             <span class="signal-weight">6%</span>
         </div>
         <div class="signal-row">
-            <span class="signal-name">💻 GitHub Activity — open source contributions</span>
+            <span class="signal-name">💻 GitHub Activity — open source contribution score</span>
             <span class="signal-weight">5%</span>
         </div>
         <div class="signal-row">
@@ -287,7 +270,7 @@ if not uploaded_file:
             <span class="signal-weight">3%</span>
         </div>
         <div class="signal-row">
-            <span class="signal-name">✅ Profile Quality — completeness, connections, acceptance rate</span>
+            <span class="signal-name">✅ Profile Quality — connections, LinkedIn, interview rate</span>
             <span class="signal-weight">2%</span>
         </div>
         <div class="signal-row">
@@ -302,20 +285,27 @@ if not uploaded_file:
 
 else:
     try:
-        with tempfile.NamedTemporaryFile(mode='wb', suffix='.json', delete=False) as tmp:
+        # Save uploaded file
+        suffix = ".json"
+        fname = uploaded_file.name.lower()
+        if fname.endswith(".gz"):
+            suffix = ".gz"
+        elif fname.endswith(".jsonl"):
+            suffix = ".jsonl"
+
+        with tempfile.NamedTemporaryFile(mode='wb', suffix=suffix, delete=False) as tmp:
             tmp.write(uploaded_file.read())
             tmp_path = tmp.name
 
-        import gzip
-        fname = uploaded_file.name.lower()
-        if fname.endswith('.gz'):
+        # Load candidates
+        if suffix == ".gz":
             candidates = []
             with gzip.open(tmp_path, 'rt', encoding='utf-8') as f:
                 for line in f:
                     line = line.strip()
                     if line:
                         candidates.append(json.loads(line))
-        elif fname.endswith('.jsonl'):
+        elif suffix == ".jsonl":
             candidates = []
             with open(tmp_path, 'r', encoding='utf-8') as f:
                 for line in f:
@@ -325,14 +315,14 @@ else:
         else:
             with open(tmp_path, 'r', encoding='utf-8') as f:
                 candidates = json.load(f)
-        from embedder import SemanticScorer
 
         BM25_K = 1500
 
-        progress = st.progress(0, text="🔍 Loading and filtering candidates...")
+        # Pipeline
+        progress = st.progress(0, text="Filtering candidates...")
         clean, honeypots = filter_honeypots(candidates, verbose=False)
 
-        progress.progress(20, text="⚡ Stage 1 — BM25 retrieval...")
+        progress.progress(15, text="Stage 1 — BM25 retrieval...")
         try:
             from bm25_retriever import get_bm25_shortlist
             if len(clean) > BM25_K:
@@ -340,10 +330,11 @@ else:
                 shortlisted = [r["candidate"] for r in bm25_results]
             else:
                 shortlisted = clean
-        except ImportError:
+        except Exception:
             shortlisted = clean
 
-        progress.progress(45, text="🧠 Stage 2 — Semantic embedding scoring (first run downloads ~90MB model)...")
+        progress.progress(35, text="Stage 2 — Semantic embedding scoring (loads ~90MB model on first run)...")
+        from embedder import SemanticScorer
         scorer_obj = SemanticScorer()
         sem_results = scorer_obj.score_candidates(shortlisted)
         semantic_scores = {
@@ -351,23 +342,26 @@ else:
             for r in sem_results
         }
 
-        progress.progress(80, text="🏆 Stage 3 — Full feature scoring and ranking...")
+        progress.progress(80, text="Stage 3 — Full feature scoring and ranking...")
         ranked = score_all(shortlisted, semantic_scores=semantic_scores)
 
         TOP_N = 10
         top = ranked[:TOP_N]
         lookup = {c["candidate_id"]: c for c in shortlisted}
 
-        progress.progress(95, text="✍️ Generating reasoning...")
+        progress.progress(95, text="Generating reasoning...")
         reasonings = {}
         for i, r in enumerate(ranked[:100], 1):
             cid = r["candidate_id"]
             if cid in lookup:
-                reasonings[cid] = generate_reasoning(lookup[cid], rank=i, score=r["score"])
+                reasonings[cid] = generate_reasoning(
+                    lookup[cid], rank=i, score=r["score"]
+                )
 
-        progress.progress(100, text="✅ Done!")
+        progress.progress(100, text="Done!")
         progress.empty()
 
+        # Metrics
         st.markdown("<br>", unsafe_allow_html=True)
         m1, m2, m3, m4, m5 = st.columns(5)
         with m1:
@@ -383,7 +377,7 @@ else:
         with m3:
             st.markdown(f"""<div class="metric-card">
                 <div class="metric-value">{len(shortlisted)}</div>
-                <div class="metric-label">After BM25 Filter</div>
+                <div class="metric-label">After BM25</div>
             </div>""", unsafe_allow_html=True)
         with m4:
             st.markdown(f"""<div class="metric-card">
@@ -397,8 +391,12 @@ else:
                 <div class="metric-label">Top Score</div>
             </div>""", unsafe_allow_html=True)
 
-        st.markdown(f'<div class="section-header">🏆 Top {TOP_N} Candidates</div>', unsafe_allow_html=True)
+        st.markdown(
+            f'<div class="section-header">🏆 Top {TOP_N} Candidates</div>',
+            unsafe_allow_html=True
+        )
 
+        # Candidate cards
         for i, r in enumerate(top, 1):
             cid = r["candidate_id"]
             c = lookup[cid]
@@ -406,6 +404,7 @@ else:
             f = r["features"]
             reasoning = reasonings.get(cid, "")
             sem_score = semantic_scores.get(cid, 0.0)
+            rs = c.get("redrob_signals", {})
 
             with st.expander(
                 f"#{i}  ·  {p['current_title']} @ {p['current_company']}"
@@ -418,79 +417,131 @@ else:
                 with left:
                     st.markdown(f"""
                     <div style="margin-bottom:16px">
-                        <div style="font-size:0.75rem;color:#9ca3af;text-transform:uppercase;letter-spacing:1px">
+                        <div style="font-size:0.75rem;color:#9ca3af;
+                                    text-transform:uppercase;letter-spacing:1px">
                             Candidate ID
                         </div>
-                        <div style="font-weight:700;color:#1a1a2e;font-size:1rem">{cid}</div>
-                        <div style="color:#6b7280;font-size:0.85rem;margin-top:4px">{p.get('headline', '')}</div>
+                        <div style="font-weight:700;color:#1a1a2e;font-size:1rem">
+                            {cid}
+                        </div>
+                        <div style="color:#6b7280;font-size:0.85rem;margin-top:4px">
+                            {p.get('headline', '')}
+                        </div>
                     </div>
                     """, unsafe_allow_html=True)
 
                     signals = [
-                        ("🎯 Skill Match",    f.get("skill_match", 0),    "linear-gradient(90deg,#7c3aed,#a855f7)"),
-                        ("💼 Career Fit",      f.get("career_fit", 0),      "linear-gradient(90deg,#a855f7,#ec4899)"),
-                        ("🔗 Semantic",        sem_score,                   "linear-gradient(90deg,#8b5cf6,#7c3aed)"),
-                        ("📅 Experience",      f.get("experience_fit", 0),  "linear-gradient(90deg,#10b981,#34d399)"),
-                        ("📍 Location",        f.get("location_fit", 0),    "linear-gradient(90deg,#3b82f6,#60a5fa)"),
-                        ("📈 Platform Demand", f.get("platform_demand", 0), "linear-gradient(90deg,#f97316,#fb923c)"),
-                        ("💻 GitHub",          f.get("github", 0),          "linear-gradient(90deg,#0f172a,#334155)"),
-                        ("🎓 Education",       f.get("education", 0),       "linear-gradient(90deg,#0ea5e9,#38bdf8)"),
-                        ("✅ Profile Quality", f.get("profile_quality", 0), "linear-gradient(90deg,#14b8a6,#2dd4bf)"),
-                        ("⚡ Availability",    f.get("availability", 0),    "linear-gradient(90deg,#f59e0b,#fbbf24)"),
+                        ("🎯 Skill Match",     f.get("skill_match", 0),    "linear-gradient(90deg,#7c3aed,#a855f7)"),
+                        ("💼 Career Fit",       f.get("career_fit", 0),     "linear-gradient(90deg,#a855f7,#ec4899)"),
+                        ("🔗 Semantic",         sem_score,                  "linear-gradient(90deg,#8b5cf6,#7c3aed)"),
+                        ("📅 Experience",       f.get("experience_fit", 0), "linear-gradient(90deg,#10b981,#34d399)"),
+                        ("📍 Location",         f.get("location_fit", 0),   "linear-gradient(90deg,#3b82f6,#60a5fa)"),
+                        ("📈 Platform Demand",  f.get("platform_demand", 0),"linear-gradient(90deg,#f97316,#fb923c)"),
+                        ("💻 GitHub",           f.get("github", 0),         "linear-gradient(90deg,#0f172a,#334155)"),
+                        ("🎓 Education",        f.get("education", 0),      "linear-gradient(90deg,#0ea5e9,#38bdf8)"),
+                        ("✅ Profile Quality",  f.get("profile_quality", 0),"linear-gradient(90deg,#14b8a6,#2dd4bf)"),
+                        ("⚡ Availability",     f.get("availability", 0),   "linear-gradient(90deg,#f59e0b,#fbbf24)"),
                     ]
                     for label, val, grad in signals:
                         pct = int(val * 100)
                         st.markdown(f"""
                         <div class="signal-label">
-                            <span>{label}</span><span class="signal-val">{pct}%</span>
+                            <span>{label}</span>
+                            <span class="signal-val">{pct}%</span>
                         </div>
                         <div class="bar-track">
-                            <div class="bar-fill" style="width:{pct}%;background:{grad}"></div>
+                            <div class="bar-fill"
+                                 style="width:{pct}%;background:{grad}"></div>
                         </div>
                         """, unsafe_allow_html=True)
 
                 with right:
-                    st.markdown('<div class="info-card-title" style="margin-top:0">WHY THIS CANDIDATE</div>', unsafe_allow_html=True)
-                    st.markdown(f'<div class="reasoning-box">{reasoning}</div>', unsafe_allow_html=True)
+                    # Reasoning
+                    st.markdown("""
+                    <div style="font-size:0.7rem;color:#9ca3af;text-transform:uppercase;
+                                letter-spacing:1px;margin-bottom:8px">
+                        Why this candidate
+                    </div>""", unsafe_allow_html=True)
+                    st.markdown(
+                        f'<div class="reasoning-box">{reasoning}</div>',
+                        unsafe_allow_html=True
+                    )
 
-                    # Candidate stats
-                    rs = c.get("redrob_signals", {})
-                    yoe = p.get("years_of_experience", "—")
+                    # Candidate stats — using correct field names
                     notice = rs.get("notice_period_days", "—")
-                    last_active = rs.get("last_active_days", "—")
-                    response_rate = rs.get("response_rate", None)
-                    saved_30d = rs.get("saved_by_recruiters_30d", "—")
-                    gh = c.get("github", {})
-                    gh_stars = gh.get("total_stars", "—") if gh else "—"
-                    gh_contribs = gh.get("contributions_last_year", "—") if gh else "—"
-                    multiplier = r.get("multiplier", "—")
-                    rr_display = f"{int(response_rate*100)}%" if response_rate is not None else "—"
-                    notice_display = f"{notice}d" if notice != "—" else "—"
-                    last_active_display = f"{last_active}d ago" if last_active != "—" else "—"
+                    rrr = rs.get("recruiter_response_rate", None)
+                    saved = rs.get("saved_by_recruiters_30d", "—")
+                    last_active = rs.get("last_active_date", "—")
+                    open_to_work = rs.get("open_to_work_flag", False)
+                    gh_score = rs.get("github_activity_score", -1)
+                    interviews = rs.get("interview_completion_rate", "—")
+                    connections = rs.get("connection_count", "—")
+
+                    rrr_display = f"{int(rrr*100)}%" if rrr is not None else "—"
+                    notice_display = f"{notice} days" if notice != "—" else "—"
+                    gh_display = str(gh_score) if gh_score != -1 else "Not linked"
+                    otw_display = "Yes" if open_to_work else "No"
 
                     st.markdown(f"""
-                    <div class="info-card">
-                        <div class="info-card-title">CANDIDATE STATS</div>
-                        <div class="stat-row"><span class="stat-key">Experience</span><span class="stat-val">{yoe} years</span></div>
-                        <div class="stat-row"><span class="stat-key">Notice Period</span><span class="stat-val">{notice_display}</span></div>
-                        <div class="stat-row"><span class="stat-key">Last Active</span><span class="stat-val">{last_active_display}</span></div>
-                        <div class="stat-row"><span class="stat-key">Response Rate</span><span class="stat-val">{rr_display}</span></div>
-                        <div class="stat-row"><span class="stat-key">Saved by Recruiters (30d)</span><span class="stat-val">{saved_30d}</span></div>
+                    <div class="stat-box">
+                        <div class="stat-box-title">Candidate Stats</div>
+                        <div class="stat-row">
+                            <span class="stat-key">Notice Period</span>
+                            <span class="stat-val">{notice_display}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-key">Open to Work</span>
+                            <span class="stat-val">{otw_display}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-key">Last Active</span>
+                            <span class="stat-val">{last_active}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-key">Recruiter Response Rate</span>
+                            <span class="stat-val">{rrr_display}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-key">Saved by Recruiters (30d)</span>
+                            <span class="stat-val">{saved}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-key">Connections</span>
+                            <span class="stat-val">{connections}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-key">GitHub Score</span>
+                            <span class="stat-val">{gh_display}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-key">Interview Completion</span>
+                            <span class="stat-val">{interviews}</span>
+                        </div>
                     </div>
-                    <div class="info-card">
-                        <div class="info-card-title">GITHUB</div>
-                        <div class="stat-row"><span class="stat-key">Stars</span><span class="stat-val">{gh_stars}</span></div>
-                        <div class="stat-row"><span class="stat-key">Contributions (last year)</span><span class="stat-val">{gh_contribs}</span></div>
-                    </div>
-                    <div class="info-card">
-                        <div class="info-card-title">PIPELINE SCORES</div>
-                        <div class="stat-row"><span class="stat-key">Semantic Score</span><span class="stat-val">{sem_score:.3f}</span></div>
-                        <div class="stat-row"><span class="stat-key">Availability Multiplier</span><span class="stat-val">{multiplier}</span></div>
-                        <div class="stat-row"><span class="stat-key">Final Score</span><span class="stat-val">{r['score']:.4f}</span></div>
+                    <div class="stat-box">
+                        <div class="stat-box-title">Pipeline Scores</div>
+                        <div class="stat-row">
+                            <span class="stat-key">Semantic Score</span>
+                            <span class="stat-val">{sem_score:.4f}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-key">Availability Multiplier</span>
+                            <span class="stat-val">{r.get('multiplier', 0):.4f}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-key">Final Score</span>
+                            <span class="stat-val">{r['score']:.4f}</span>
+                        </div>
                     </div>
                     """, unsafe_allow_html=True)
 
-                    st.markdown('<div class="info-card-title" style="margin-top:4px">TOP SKILLS</div>', unsafe_allow_html=True)
+                    # Top skills
+                    st.markdown("""
+                    <div style="font-size:0.7rem;color:#9ca3af;text-transform:uppercase;
+                                letter-spacing:1px;margin:4px 0 8px 0">
+                        Top Skills
+                    </div>""", unsafe_allow_html=True)
+
                     skills = sorted(
                         c.get("skills", []),
                         key=lambda s: s.get("endorsements", 0),
@@ -504,30 +555,38 @@ else:
                             "intermediate": ("d1fae5", "065f46"),
                             "beginner":     ("f3f4f6", "6b7280")
                         }
-                        bg, fg = colors.get(s.get("proficiency", "beginner"), ("f3f4f6", "6b7280"))
+                        bg, fg = colors.get(
+                            s.get("proficiency", "beginner"),
+                            ("f3f4f6", "6b7280")
+                        )
                         pills_html += (
-                            f'<span class="skill-pill" style="background:#{bg};color:#{fg}">'
+                            f'<span class="skill-pill" '
+                            f'style="background:#{bg};color:#{fg}">'
                             f'{s["name"]}</span>'
                         )
                     st.markdown(pills_html, unsafe_allow_html=True)
 
+        # Download
         import csv, io
         output = io.StringIO()
-        writer = csv.DictWriter(output, fieldnames=["candidate_id", "rank", "score", "reasoning"])
+        writer = csv.DictWriter(
+            output,
+            fieldnames=["candidate_id", "rank", "score", "reasoning"]
+        )
         writer.writeheader()
         for i, r in enumerate(ranked[:100], 1):
             cid = r["candidate_id"]
             if cid in lookup:
                 writer.writerow({
                     "candidate_id": cid,
-                    "rank": i,
-                    "score": round(r["score"], 6),
-                    "reasoning": reasonings.get(cid, "")
+                    "rank":         i,
+                    "score":        round(r["score"], 6),
+                    "reasoning":    reasonings.get(cid, "")
                 })
 
         st.markdown("<br>", unsafe_allow_html=True)
         st.download_button(
-            label="⬇️ Download submission.csv",
+            label="⬇️  Download submission.csv",
             data=output.getvalue(),
             file_name="submission.csv",
             mime="text/csv",
