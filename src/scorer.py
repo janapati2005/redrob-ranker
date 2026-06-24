@@ -1,4 +1,8 @@
 # scorer.py
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent))
+
 from features import compute_all_features
 
 WEIGHTS = {
@@ -16,16 +20,13 @@ WEIGHTS = {
 
 def compute_score(candidate, semantic_score=0.0):
     f = compute_all_features(candidate)
-
     effective_semantic = semantic_score
     if f["career_fit"] <= 0.05:
         effective_semantic = 0.0
     f["semantic"] = effective_semantic
-
     base = sum(WEIGHTS[k] * f[k] for k in WEIGHTS)
     multiplier = 0.40 + 0.60 * f["availability"]
     final = round(base * multiplier, 6)
-
     return {
         "candidate_id": f["candidate_id"],
         "score":        final,
@@ -37,13 +38,11 @@ def compute_score(candidate, semantic_score=0.0):
 def score_all(candidates, semantic_scores=None):
     if semantic_scores is None:
         semantic_scores = {}
-
     results = []
     for c in candidates:
         cid = c["candidate_id"]
         sem_score = semantic_scores.get(cid, 0.0)
         results.append(compute_score(c, semantic_score=sem_score))
-
     results.sort(key=lambda x: (-x["score"], x["candidate_id"]))
     return results
 

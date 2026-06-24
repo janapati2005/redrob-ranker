@@ -1,7 +1,6 @@
-# reasoner.py
-# Generates specific, honest, non-templated reasoning per candidate.
-# Stage 4 evaluation checks: specific facts, no hallucination, variation, tone matches rank.
-
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent))
 from datetime import date
 
 TODAY = date.today()

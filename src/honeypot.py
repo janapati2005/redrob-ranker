@@ -1,9 +1,10 @@
 # honeypot.py
-# Detects candidates with impossible or fabricated profiles.
-# The competition disqualifies you if >10% of your top 100 are honeypots.
-# A good ranker naturally avoids them — this module makes it explicit.
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent))
 
 from datetime import date
+# ... rest stays exactly the same
 
 TODAY = date.today()
 
