@@ -325,7 +325,6 @@ else:
         else:
             with open(tmp_path, 'r', encoding='utf-8') as f:
                 candidates = json.load(f)
-        from bm25_retriever import get_bm25_shortlist
         from embedder import SemanticScorer
 
         BM25_K = 1500
@@ -334,10 +333,14 @@ else:
         clean, honeypots = filter_honeypots(candidates, verbose=False)
 
         progress.progress(20, text="⚡ Stage 1 — BM25 retrieval...")
-        if len(clean) > BM25_K:
-            bm25_results = get_bm25_shortlist(clean, top_k=BM25_K)
-            shortlisted = [r["candidate"] for r in bm25_results]
-        else:
+        try:
+            from bm25_retriever import get_bm25_shortlist
+            if len(clean) > BM25_K:
+                bm25_results = get_bm25_shortlist(clean, top_k=BM25_K)
+                shortlisted = [r["candidate"] for r in bm25_results]
+            else:
+                shortlisted = clean
+        except ImportError:
             shortlisted = clean
 
         progress.progress(45, text="🧠 Stage 2 — Semantic embedding scoring (first run downloads ~90MB model)...")
