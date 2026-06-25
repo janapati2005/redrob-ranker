@@ -227,7 +227,7 @@ redrob-ranker/
 | Tool | Version | Purpose |
 |------|---------|---------|
 | Python | 3.11 | Core pipeline |
-| sentence-transformers | 3.0.1 | Semantic embeddings |
+| sentence-transformers | 3.0.1 | Semantic embeddings (local only) |
 | scikit-learn | 1.5.0 | Cosine similarity |
 | numpy | 1.26.4 | Numerical operations |
 | pandas | 2.2.2 | Data handling |

@@ -28,20 +28,13 @@ st.set_page_config(
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
 html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
-
-.stApp {
-    background: #f5f4f7;
-    color: #1a1a2e;
-}
-
+.stApp { background: #f5f4f7; color: #1a1a2e; }
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
 .stDeployButton {display: none;}
 header {visibility: hidden;}
 
-/* ── Hero ── */
 .hero {
     background: linear-gradient(135deg, #6d28d9 0%, #9333ea 50%, #db2777 100%);
     border-radius: 20px;
@@ -77,8 +70,6 @@ header {visibility: hidden;}
     margin: 0;
     line-height: 1.7;
 }
-
-/* ── Step cards ── */
 .step-card {
     background: #fff;
     border-radius: 14px;
@@ -89,15 +80,8 @@ header {visibility: hidden;}
     height: 100%;
 }
 .step-icon { font-size: 1.9rem; margin-bottom: 10px; }
-.step-title {
-    font-size: 0.92rem;
-    font-weight: 700;
-    color: #1a1a2e;
-    margin-bottom: 6px;
-}
+.step-title { font-size: 0.92rem; font-weight: 700; color: #1a1a2e; margin-bottom: 6px; }
 .step-desc { font-size: 0.78rem; color: #6b7280; line-height: 1.55; }
-
-/* ── Metric cards ── */
 .metric-card {
     background: #fff;
     border-radius: 14px;
@@ -122,8 +106,6 @@ header {visibility: hidden;}
     margin-top: 5px;
     font-weight: 600;
 }
-
-/* ── Section header ── */
 .section-header {
     font-size: 1.2rem;
     font-weight: 700;
@@ -131,11 +113,7 @@ header {visibility: hidden;}
     margin: 28px 0 14px 0;
     letter-spacing: -0.2px;
 }
-
-/* ── Signal bars ── */
-.signal-row-wrap {
-    margin-bottom: 11px;
-}
+.signal-row-wrap { margin-bottom: 11px; }
 .signal-top {
     display: flex;
     justify-content: space-between;
@@ -152,8 +130,6 @@ header {visibility: hidden;}
     overflow: hidden;
 }
 .bar-fill { height: 7px; border-radius: 6px; }
-
-/* ── Reasoning box ── */
 .reasoning-box {
     background: #faf5ff;
     border-left: 4px solid #9333ea;
@@ -172,8 +148,6 @@ header {visibility: hidden;}
     color: #9ca3af;
     margin-bottom: 8px;
 }
-
-/* ── Stat box ── */
 .stat-box {
     background: #fff;
     border-radius: 12px;
@@ -200,8 +174,6 @@ header {visibility: hidden;}
 .stat-row:last-child { border-bottom: none; }
 .stat-key { color: #6b7280; }
 .stat-val { font-weight: 600; color: #1a1a2e; }
-
-/* ── Skill pills ── */
 .skill-pill {
     display: inline-block;
     border-radius: 20px;
@@ -218,8 +190,6 @@ header {visibility: hidden;}
     color: #9ca3af;
     margin: 12px 0 8px 0;
 }
-
-/* ── Candidate ID block ── */
 .cand-id-block {
     background: #faf5ff;
     border-radius: 10px;
@@ -247,8 +217,6 @@ header {visibility: hidden;}
     margin-top: 4px;
     line-height: 1.4;
 }
-
-/* ── Signal table (landing) ── */
 .signal-table {
     background: #fff;
     border-radius: 16px;
@@ -274,21 +242,19 @@ header {visibility: hidden;}
     min-width: 60px;
     text-align: right;
 }
-
-/* ── Score badge ── */
-.score-badge {
-    display: inline-block;
-    background: linear-gradient(135deg, #6d28d9, #9333ea);
-    color: #fff;
-    border-radius: 8px;
-    padding: 3px 10px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    margin-left: 8px;
+.sem-note {
+    background: #fff;
+    border: 1px solid #ede9fe;
+    border-left: 4px solid #9333ea;
+    border-radius: 0 10px 10px 0;
+    padding: 12px 16px;
+    font-size: 0.81rem;
+    color: #6b7280;
+    line-height: 1.6;
+    margin-bottom: 20px;
 }
 </style>
 """, unsafe_allow_html=True)
-
 
 # ── Hero ──────────────────────────────────────────────────────────────────────
 st.markdown("""
@@ -309,30 +275,23 @@ with c1:
     st.markdown("""<div class="step-card">
         <div class="step-icon">📂</div>
         <div class="step-title">Upload</div>
-        <div class="step-desc">
-            Accepts .json, .jsonl, or .gz candidate pool files
-        </div>
+        <div class="step-desc">Accepts .json, .jsonl, or .gz candidate pool files</div>
     </div>""", unsafe_allow_html=True)
 with c2:
     st.markdown("""<div class="step-card">
         <div class="step-icon">🧠</div>
         <div class="step-title">Analyze</div>
-        <div class="step-desc">
-            BM25 text retrieval followed by 9-signal weighted behavioral scoring
-        </div>
+        <div class="step-desc">BM25 text retrieval followed by 9-signal weighted behavioral scoring</div>
     </div>""", unsafe_allow_html=True)
 with c3:
     st.markdown("""<div class="step-card">
         <div class="step-icon">🏆</div>
         <div class="step-title">Shortlist</div>
-        <div class="step-desc">
-            Top candidates with signal breakdown, reasoning, and downloadable CSV
-        </div>
+        <div class="step-desc">Top candidates with signal breakdown, reasoning, and downloadable CSV</div>
     </div>""", unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# ── Upload ────────────────────────────────────────────────────────────────────
 uploaded_file = st.file_uploader(
     "Upload candidates file",
     type=["json", "jsonl", "gz"],
@@ -341,52 +300,51 @@ uploaded_file = st.file_uploader(
 
 if not uploaded_file:
     col_l, col_r = st.columns([3, 2], gap="large")
-
     with col_l:
         st.markdown("""
         <div class="signal-table">
             <div style="font-size:0.95rem;font-weight:700;color:#1a1a2e;
                         margin-bottom:16px;letter-spacing:-0.2px">
-                Scoring System — 9 Signals
+                Scoring System — 9 Signals + Availability Multiplier
             </div>
             <div class="signal-table-row">
-                <span class="signal-table-name">🎯 Skill Match</span>
+                <span class="signal-table-name">🎯 Skill Match — proficiency, endorsements, duration, assessments</span>
                 <span class="signal-table-wt">27%</span>
             </div>
             <div class="signal-table-row">
-                <span class="signal-table-name">💼 Career Trajectory</span>
+                <span class="signal-table-name">💼 Career Trajectory — title, domain, product company, consulting penalty</span>
                 <span class="signal-table-wt">24%</span>
             </div>
             <div class="signal-table-row">
-                <span class="signal-table-name">🔗 Semantic JD Match</span>
+                <span class="signal-table-name">🔗 Semantic JD Match — sentence-transformer cosine similarity</span>
                 <span class="signal-table-wt">15%</span>
             </div>
             <div class="signal-table-row">
-                <span class="signal-table-name">📅 Experience Fit</span>
+                <span class="signal-table-name">📅 Experience Fit — JD requires 5–9 years, sweet spot 6–8</span>
                 <span class="signal-table-wt">10%</span>
             </div>
             <div class="signal-table-row">
-                <span class="signal-table-name">📍 Location Fit</span>
+                <span class="signal-table-name">📍 Location Fit — India preferred, Pune and Noida ideal</span>
                 <span class="signal-table-wt">8%</span>
             </div>
             <div class="signal-table-row">
-                <span class="signal-table-name">📈 Platform Demand</span>
+                <span class="signal-table-name">📈 Platform Demand — recruiter saves, search appearances</span>
                 <span class="signal-table-wt">6%</span>
             </div>
             <div class="signal-table-row">
-                <span class="signal-table-name">💻 GitHub Activity</span>
+                <span class="signal-table-name">💻 GitHub Activity — open source contribution score</span>
                 <span class="signal-table-wt">5%</span>
             </div>
             <div class="signal-table-row">
-                <span class="signal-table-name">🎓 Education Quality</span>
+                <span class="signal-table-name">🎓 Education Quality — institution tier and field relevance</span>
                 <span class="signal-table-wt">3%</span>
             </div>
             <div class="signal-table-row">
-                <span class="signal-table-name">✅ Profile Quality</span>
+                <span class="signal-table-name">✅ Profile Quality — connections, LinkedIn, interview rate</span>
                 <span class="signal-table-wt">2%</span>
             </div>
             <div class="signal-table-row">
-                <span class="signal-table-name">⚡ Availability</span>
+                <span class="signal-table-name">⚡ Availability — last active, response rate, notice period</span>
                 <span class="signal-table-wt">× multiplier</span>
             </div>
         </div>
@@ -394,35 +352,40 @@ if not uploaded_file:
 
     with col_r:
         st.markdown("""
-        <div class="stat-box" style="margin-bottom:16px">
-            <div class="stat-box-title">How Availability Works</div>
-            <p style="font-size:0.82rem;color:#6b7280;line-height:1.65;margin:0">
-                Availability is not a weighted signal — it is a
-                <strong style="color:#1a1a2e">multiplier</strong> applied to the
-                entire base score. A technically excellent candidate who never
-                responds to recruiters is worth nothing to a hiring team.
-                <br><br>
-                <strong style="color:#6d28d9">Formula:</strong><br>
-                Final Score = Base Score × (0.40 + 0.60 × availability)
-                <br><br>
-                The 0.40 floor ensures inactive candidates are never zeroed out
-                entirely — they may still respond to the right opportunity.
+        <div class="stat-box" style="margin-bottom:14px">
+            <div class="stat-box-title">Availability Multiplier</div>
+            <p style="font-size:0.81rem;color:#6b7280;line-height:1.65;margin:0">
+                Availability is not a direct signal weight — it scales the entire
+                base score up or down.<br><br>
+                <strong style="color:#1a1a2e">Formula:</strong><br>
+                Final = Base × (0.40 + 0.60 × availability)<br><br>
+                A technically perfect candidate who never responds to recruiters
+                scores 40% of their potential. The 0.40 floor ensures they are
+                never completely zeroed out.
+            </p>
+        </div>
+        <div class="stat-box" style="margin-bottom:14px">
+            <div class="stat-box-title">Semantic JD Match</div>
+            <p style="font-size:0.81rem;color:#6b7280;line-height:1.65;margin:0">
+                Uses <strong style="color:#1a1a2e">sentence-transformers
+                all-MiniLM-L6-v2</strong> to encode the full JD and each
+                candidate profile into 384-dimensional vectors. Cosine similarity
+                captures meaning-level alignment — "Information Retrieval
+                Engineer" and "Search Systems Engineer" score high similarity
+                even without shared keywords.
             </p>
         </div>
         <div class="stat-box">
             <div class="stat-box-title">Honeypot Detection</div>
-            <p style="font-size:0.82rem;color:#6b7280;line-height:1.65;margin:0">
-                Profiles with impossible data are removed before scoring —
-                expert skill with zero months of usage, claimed experience
+            <p style="font-size:0.81rem;color:#6b7280;line-height:1.65;margin:0">
+                Profiles with impossible data are removed before scoring.
+                Expert skill with zero months of usage, claimed experience
                 exceeding career history by 3+ years, or signal values outside
                 valid ranges.
             </p>
         </div>
-        """, unsafe_allow_html=True)
-
-        st.markdown("""
-        <p style="color:#9ca3af;font-size:0.78rem;text-align:center;
-                   margin-top:12px">
+        <p style="color:#9ca3af;font-size:0.77rem;text-align:center;
+                   margin-top:14px">
             Upload <code>sample_candidates.json</code> to get started
         </p>
         """, unsafe_allow_html=True)
@@ -438,7 +401,6 @@ else:
             tmp.write(uploaded_file.read())
             tmp_path = tmp.name
 
-        # Load
         if suffix == ".gz":
             candidates = []
             with gzip.open(tmp_path, 'rt', encoding='utf-8') as f:
@@ -459,7 +421,6 @@ else:
 
         BM25_K = 200
 
-        # Pipeline
         progress = st.progress(0, text="Scanning and filtering candidates...")
         clean, honeypots = filter_honeypots(candidates, verbose=False)
 
@@ -474,16 +435,15 @@ else:
         except Exception:
             shortlisted = clean
 
-        progress.progress(70, text="Stage 2 — Scoring all signals...")
-        # Redistribute semantic 15% weight across other signals for cloud mode
-        # so scores remain comparable to local full-pipeline results
+        progress.progress(70, text="Stage 2 — Scoring all 9 signals...")
+        # On cloud, semantic=0 but scorer redistributes weights to keep total=100%
         ranked = score_all(shortlisted, semantic_scores={})
 
         TOP_N = min(10, len(ranked))
         top = ranked[:TOP_N]
         lookup = {c["candidate_id"]: c for c in shortlisted}
 
-        progress.progress(90, text="Generating reasoning for top candidates...")
+        progress.progress(90, text="Generating reasoning...")
         reasonings = {}
         for i, r in enumerate(ranked[:100], 1):
             cid = r["candidate_id"]
@@ -495,16 +455,14 @@ else:
         progress.progress(100, text="Complete.")
         progress.empty()
 
-        # Note about cloud mode
+        # Semantic note
         st.markdown("""
-        <div style="background:#faf5ff;border:1px solid #ede9fe;border-radius:10px;
-                    padding:12px 18px;margin-bottom:20px;font-size:0.82rem;
-                    color:#6b7280;line-height:1.55">
-            <strong style="color:#6d28d9">Note:</strong>
-            Semantic embedding scoring (15% weight) requires
-            sentence-transformers which runs locally.
-            This sandbox demonstrates the remaining 8 signals.
-            For full 9-signal rankings, run
+        <div class="sem-note">
+            <strong style="color:#6d28d9">Sandbox mode:</strong>
+            Semantic JD matching (15% weight, sentence-transformers) requires
+            a local environment with PyTorch. On this cloud sandbox, that weight
+            is redistributed proportionally across the remaining 8 signals so
+            scores remain comparable. For full 9-signal rankings run
             <code>python src/rank.py --candidates candidates.jsonl</code> locally.
         </div>
         """, unsafe_allow_html=True)
@@ -529,7 +487,7 @@ else:
             unsafe_allow_html=True
         )
 
-        # Candidate cards
+        # Candidate cards — NOT auto-expanded
         for i, r in enumerate(top, 1):
             cid  = r["candidate_id"]
             c    = lookup[cid]
@@ -543,12 +501,10 @@ else:
                 f"#{i}  ·  {p['current_title']} @ {p['current_company']}"
                 f"  ·  {p['years_of_experience']}y exp"
                 f"  ·  {p['location']}, {p['country']}"
-                f"  ·  Score: {r['score']:.4f}",
-                expanded=(i == 1)
+                f"  ·  Score: {r['score']:.4f}"
             ):
                 left, right = st.columns([11, 10], gap="large")
 
-                # ── LEFT: ID + Signals ─────────────────────────────────────
                 with left:
                     st.markdown(f"""
                     <div class="cand-id-block">
@@ -558,34 +514,34 @@ else:
                     </div>
                     """, unsafe_allow_html=True)
 
-                    # Signal bars — excluding semantic (0 on cloud)
+                    # 8 signal bars (semantic excluded in cloud mode)
                     signals = [
                         ("🎯 Skill Match",
-                         f.get("skill_match", 0),
+                         f.get("skill_match",0),
                          "linear-gradient(90deg,#6d28d9,#9333ea)"),
                         ("💼 Career Trajectory",
-                         f.get("career_fit", 0),
+                         f.get("career_fit",0),
                          "linear-gradient(90deg,#9333ea,#db2777)"),
                         ("📅 Experience Fit",
-                         f.get("experience_fit", 0),
+                         f.get("experience_fit",0),
                          "linear-gradient(90deg,#059669,#34d399)"),
                         ("📍 Location Fit",
-                         f.get("location_fit", 0),
+                         f.get("location_fit",0),
                          "linear-gradient(90deg,#2563eb,#60a5fa)"),
                         ("📈 Platform Demand",
-                         f.get("platform_demand", 0),
+                         f.get("platform_demand",0),
                          "linear-gradient(90deg,#ea580c,#fb923c)"),
                         ("💻 GitHub Activity",
-                         f.get("github", 0),
+                         f.get("github",0),
                          "linear-gradient(90deg,#334155,#64748b)"),
                         ("🎓 Education Quality",
-                         f.get("education", 0),
+                         f.get("education",0),
                          "linear-gradient(90deg,#0284c7,#38bdf8)"),
                         ("✅ Profile Quality",
-                         f.get("profile_quality", 0),
+                         f.get("profile_quality",0),
                          "linear-gradient(90deg,#0d9488,#2dd4bf)"),
                         ("⚡ Availability",
-                         f.get("availability", 0),
+                         f.get("availability",0),
                          "linear-gradient(90deg,#d97706,#fbbf24)"),
                     ]
 
@@ -606,15 +562,12 @@ else:
                         </div>"""
                     st.markdown(bars_html, unsafe_allow_html=True)
 
-                # ── RIGHT: Reasoning + Stats + Skills ─────────────────────
                 with right:
-                    # Reasoning
                     st.markdown(f"""
                     <div class="reasoning-label">Recruiter Reasoning</div>
                     <div class="reasoning-box">{rsn}</div>
                     """, unsafe_allow_html=True)
 
-                    # Candidate stats
                     notice  = rs.get("notice_period_days", "—")
                     rrr     = rs.get("recruiter_response_rate", None)
                     saved   = rs.get("saved_by_recruiters_30d", "—")
@@ -624,11 +577,11 @@ else:
                     conns   = rs.get("connection_count", "—")
                     icr     = rs.get("interview_completion_rate", "—")
 
-                    rrr_s   = f"{int(rrr*100)}%" if rrr is not None else "—"
-                    notice_s= f"{notice} days" if notice != "—" else "—"
-                    gh_s    = str(int(gh)) if gh != -1 else "Not linked"
-                    otw_s   = "Open to work" if otw else "Not seeking"
-                    icr_s   = f"{int(icr*100)}%" if isinstance(icr,float) else "—"
+                    rrr_s    = f"{int(rrr*100)}%" if rrr is not None else "—"
+                    notice_s = f"{notice} days" if notice != "—" else "—"
+                    gh_s     = str(int(gh)) if gh != -1 else "Not linked"
+                    otw_s    = "Open to work" if otw else "Not seeking"
+                    icr_s    = f"{int(icr*100)}%" if isinstance(icr,float) else "—"
 
                     st.markdown(f"""
                     <div class="stat-box">
@@ -667,23 +620,26 @@ else:
                         </div>
                     </div>
                     <div class="stat-box">
-                        <div class="stat-box-title">Final Score Breakdown</div>
+                        <div class="stat-box-title">Score Breakdown</div>
+                        <div class="stat-row">
+                            <span class="stat-key">Availability %</span>
+                            <span class="stat-val">{avail_pct}%</span>
+                        </div>
                         <div class="stat-row">
                             <span class="stat-key">Availability Multiplier</span>
-                            <span class="stat-val">{r.get('multiplier',0):.3f}
-                                &nbsp;(avail {avail_pct}%)</span>
+                            <span class="stat-val">{r.get('multiplier',0):.3f}</span>
                         </div>
                         <div class="stat-row">
                             <span class="stat-key">Final Score</span>
                             <span class="stat-val"
-                                  style="color:#6d28d9;font-size:0.95rem">
+                                  style="color:#6d28d9;font-size:0.95rem;
+                                         font-weight:800">
                                 {r['score']:.4f}
                             </span>
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
 
-                    # Top skills
                     st.markdown(
                         '<div class="skill-section-title">Top Skills</div>',
                         unsafe_allow_html=True
@@ -737,5 +693,5 @@ else:
         os.unlink(tmp_path)
 
     except Exception as e:
-        st.error(f"Error processing file: {e}")
+        st.error(f"Error: {e}")
         st.exception(e)
