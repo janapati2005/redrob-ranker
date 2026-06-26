@@ -90,15 +90,15 @@ Availability is a **multiplier**, not a weight, because a candidate who never re
 
 | Signal | Reason |
 |--------|--------|
-| Skill 27% | JD names exact tools: FAISS, Pinecone, Weaviate, sentence-transformers, NDCG. Technical fit is the primary gate. |
-| Career 24% | JD explicitly warns against keyword stuffers and consulting-only backgrounds. Career fit is the trap-killer. |
-| Semantic 15% | Captures meaning-level alignment like "Information Retrieval Engineer" and "Search Systems Engineer" are the same even without shared keywords. |
-| Experience 10% | Years matter but what you did in those years matters more. |
-| Location 8% | Important but solvable. A great candidate willing to relocate still qualifies. |
-| Platform Demand 6% | Crowd-sourced recruiter validation - real hiring professionals already saved these profiles. |
-| GitHub 5% | JD calls it a strong positive signal, not a hard requirement. |
-| Education 3% | IIT/IISc tier-1 education is a differentiator for a founding-team AI role. |
-| Profile Quality 2% | Engagement and platform credibility. Tie-breaker level signal. |
+| Skill | JD names exact tools: FAISS, Pinecone, Weaviate, sentence-transformers, NDCG. Technical fit is the primary gate. |
+| Career | JD explicitly warns against keyword stuffers and consulting-only backgrounds. Career fit is the trap-killer. |
+| Semantic | Captures meaning-level alignment like "Information Retrieval Engineer" and "Search Systems Engineer" are the same even without shared keywords. |
+| Experience | Years matter but what you did in those years matters more. |
+| Location | Important but solvable. A great candidate willing to relocate still qualifies. |
+| Platform Demand | Crowd-sourced recruiter validation - real hiring professionals already saved these profiles. |
+| GitHub | JD calls it a strong positive signal, not a hard requirement. |
+| Education | IIT/IISc tier-1 education is a differentiator for a founding-team AI role. |
+| Profile Quality | Engagement and platform credibility. Tie-breaker level signal. |
 
 ---
 
