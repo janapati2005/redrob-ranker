@@ -2,13 +2,13 @@
 
 **Team CrossSense** · Redrob Data and AI Hackathon 2026
 
-An AI-powered hybrid pipeline that ranks 100,000 job candidates for a Senior AI Engineer role and returns the top 100 best fits in under 2 minutes on CPU — zero GPU, zero network calls during ranking.
+An AI-powered hybrid pipeline that ranks 100,000 job candidates for a Senior AI Engineer role and returns the top 100 best fits in under 2 minutes on CPU with zero GPU, zero network calls during ranking.
 
 ---
 
 ## The Problem
 
-Recruiters go through hundreds of profiles and still miss the right person because keyword filters cannot see what actually matters. This system ranks candidates the way a great recruiter would — by understanding career trajectory, skill depth, semantic JD alignment, and behavioral availability — not just keyword presence.
+Recruiters go through hundreds of profiles and still miss the right person because keyword filters cannot see what actually matters. This system ranks candidates the way a great recruiter would, by understanding career trajectory, skill depth, semantic JD alignment and behavioral availability - not just keyword presence.
 
 ---
 
@@ -92,10 +92,10 @@ Availability is a **multiplier**, not a weight, because a candidate who never re
 |--------|--------|
 | Skill 27% | JD names exact tools: FAISS, Pinecone, Weaviate, sentence-transformers, NDCG. Technical fit is the primary gate. |
 | Career 24% | JD explicitly warns against keyword stuffers and consulting-only backgrounds. Career fit is the trap-killer. |
-| Semantic 15% | Captures meaning-level alignment — "Information Retrieval Engineer" and "Search Systems Engineer" are the same even without shared keywords. |
+| Semantic 15% | Captures meaning-level alignment like "Information Retrieval Engineer" and "Search Systems Engineer" are the same even without shared keywords. |
 | Experience 10% | Years matter but what you did in those years matters more. |
 | Location 8% | Important but solvable. A great candidate willing to relocate still qualifies. |
-| Platform Demand 6% | Crowd-sourced recruiter validation — real hiring professionals already saved these profiles. |
+| Platform Demand 6% | Crowd-sourced recruiter validation - real hiring professionals already saved these profiles. |
 | GitHub 5% | JD calls it a strong positive signal, not a hard requirement. |
 | Education 3% | IIT/IISc tier-1 education is a differentiator for a founding-team AI role. |
 | Profile Quality 2% | Engagement and platform credibility. Tie-breaker level signal. |
@@ -108,7 +108,7 @@ The dataset contains 108 fake profiles. We detect and remove all of them before 
 
 | Check | What It Catches |
 |-------|----------------|
-| Expert skill with 0 months usage | Impossible — you cannot be expert in something you never used |
+| Expert skill with 0 months usage | Impossible because you cannot be expert in something you never used |
 | Claimed experience > 3 years beyond career history | Mathematically impossible |
 | Signal values out of valid range | Acceptance rate > 1.0, completion rate > 1.0, profile score > 100 |
 | Implausible tenure | 20+ years at a company starting after 1990 |
