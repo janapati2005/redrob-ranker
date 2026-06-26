@@ -2,7 +2,7 @@
 
 **Team CrossSense** · Redrob Data and AI Hackathon 2026
 
-An AI-powered hybrid pipeline that ranks 100,000 job candidates for a Senior AI Engineer role and returns the top 100 best fits in under 2 minutes on CPU, with zero GPU and zero network calls during ranking.
+An AI-powered hybrid pipeline that ranks 100,000 job candidates for a Senior AI Engineer role and returns the top 100 best fits in under 2 minutes on CPU — zero GPU, zero network calls during ranking.
 
 ---
 
@@ -12,37 +12,42 @@ Recruiters go through hundreds of profiles and still miss the right person becau
 
 ---
 
+## Live Sandbox
+
+**https://redrob-ranker-hg7bjpsw4c6dzf6wixkbg8.streamlit.app**
+
+Upload `sample_candidates.json` from the hackathon bundle to see the full 9-signal pipeline with real semantic scores.
+
+---
+
 ## How It Works
 
 ```
 100,000 candidates (.json / .jsonl / .jsonl.gz)
-         |
-         v
-    loader.py          Reads all three file formats
-         |
-         v
-    honeypot.py        Removes fake and impossible profiles (108 removed)
-         |
-         v
-    bm25_retriever.py  Stage 1 — BM25 text retrieval, shortlists top 1500
-         |
-         v
-    embedder.py        Stage 2 — Semantic scoring via sentence-transformers
-         |
-         v
-    features.py        Extracts 9 signals per candidate
-         |
-         v
-    scorer.py          Combines signals into final score with availability multiplier
-         |
-         v
-    reasoner.py        Generates per-candidate reasoning text
-         |
-         v
-    rank.py            Main entry point, outputs submission.csv
-         |
-         v
-    Top 100 candidates saved to output/submission.csv
+         │
+         ▼
+    loader.py             Reads all three file formats
+         │
+         ▼
+    honeypot.py           Removes 108 fake and impossible profiles
+         │
+         ▼
+    bm25_retriever.py     Stage 1 — BM25 shortlists top 1500 from 99,892
+         │
+         ▼
+    embedder.py           Stage 2 — Semantic scoring via sentence-transformers
+         │
+         ▼
+    features.py           Extracts 9 signals per candidate
+         │
+         ▼
+    scorer.py             Weighted score + availability multiplier
+         │
+         ▼
+    reasoner.py           Per-candidate reasoning text
+         │
+         ▼
+    rank.py               Main entry point → output/submission.csv
 ```
 
 ---
@@ -50,17 +55,17 @@ Recruiters go through hundreds of profiles and still miss the right person becau
 ## Scoring Formula
 
 ```
-Base Score  =  (skill_match x 0.27) + (career_fit x 0.24) + (semantic x 0.15)
-            +  (experience_fit x 0.10) + (location_fit x 0.08)
-            +  (platform_demand x 0.06) + (github x 0.05)
-            +  (education x 0.03) + (profile_quality x 0.02)
+Base Score  =  (skill_match × 0.27) + (career_fit × 0.24) + (semantic × 0.15)
+            +  (experience_fit × 0.10) + (location_fit × 0.08)
+            +  (platform_demand × 0.06) + (github × 0.05)
+            +  (education × 0.03) + (profile_quality × 0.02)
 
-Multiplier  =  0.40 + (0.60 x availability_score)
+Multiplier  =  0.40 + (0.60 × availability_score)
 
-Final Score =  Base Score x Multiplier
+Final Score =  Base Score × Multiplier
 ```
 
-Availability is a multiplier and not a direct weight because a candidate who never responds has zero hiring value regardless of technical fit. The 0.40 floor means inactive candidates are not completely zeroed out.
+Availability is a **multiplier**, not a weight, because a candidate who never responds has zero hiring value regardless of technical fit. The 0.40 floor means inactive candidates are never completely zeroed out.
 
 ---
 
@@ -70,14 +75,14 @@ Availability is a multiplier and not a direct weight because a candidate who nev
 |--------|--------|-----------------|
 | Skill Match | 27% | Proficiency level, endorsements, usage duration, platform assessment scores |
 | Career Fit | 24% | Job titles, product company experience, domain alignment, consulting penalty |
-| Semantic Similarity | 15% | Sentence-transformer cosine similarity between candidate profile and JD |
-| Experience Fit | 10% | Years of experience vs JD requirement of 5 to 9 years, sweet spot 6 to 8 |
-| Location Fit | 8% | India preferred, Pune and Noida ideal, Hyderabad and Bangalore also accepted |
+| Semantic Similarity | 15% | all-MiniLM-L6-v2 cosine similarity between candidate profile and JD |
+| Experience Fit | 10% | Years of experience vs JD requirement of 5–9 years, sweet spot 6–8 |
+| Location Fit | 8% | India preferred, Pune and Noida ideal, Hyderabad and Bangalore accepted |
 | Platform Demand | 6% | Recruiter saves, search appearances, profile completeness score |
 | GitHub Activity | 5% | Open source contribution score from the Redrob platform |
 | Education | 3% | Institution tier (IIT/NIT/etc.) and field of study relevance |
 | Profile Quality | 2% | Connection count, LinkedIn linked, interview and offer acceptance rates |
-| Availability | Multiplier | Last active date, recruiter response rate, notice period, open to work flag |
+| Availability | × multiplier | Last active date, recruiter response rate, notice period, open to work flag |
 
 ---
 
@@ -99,16 +104,35 @@ Availability is a multiplier and not a direct weight because a candidate who nev
 
 ## Honeypot Detection
 
-The dataset contains ~108 fake profiles. We detect and remove them before scoring.
+The dataset contains 108 fake profiles. We detect and remove all of them before scoring.
 
 | Check | What It Catches |
 |-------|----------------|
 | Expert skill with 0 months usage | Impossible — you cannot be expert in something you never used |
 | Claimed experience > 3 years beyond career history | Mathematically impossible |
 | Signal values out of valid range | Acceptance rate > 1.0, completion rate > 1.0, profile score > 100 |
-| Implausible tenure | 20+ years at a company started after 1990 |
+| Implausible tenure | 20+ years at a company starting after 1990 |
 
-Result: 108 honeypots removed, zero honeypots in top 100.
+**Result: 108 honeypots removed. Zero honeypots in top 100.**
+
+---
+
+## Top 10 Results on Full 100k Dataset
+
+| Rank | Candidate ID | Score | Semantic | Title |
+|------|-------------|-------|----------|-------|
+| 1 | CAND_0000031 | 0.7780 | 0.910 | Recommendation Systems Engineer @ Swiggy |
+| 2 | CAND_0036184 | 0.7646 | 0.904 | Recommendation Systems Engineer |
+| 3 | CAND_0046525 | 0.7466 | 0.821 | Senior ML Engineer |
+| 4 | CAND_0011687 | 0.6909 | 0.706 | Senior NLP Engineer |
+| 5 | CAND_0062247 | 0.6803 | 0.918 | AI Engineer @ Pinecone |
+| 6 | CAND_0017960 | 0.6789 | 0.813 | Recommendation Systems Engineer |
+| 7 | CAND_0014440 | 0.6616 | 0.735 | Recommendation Systems Engineer |
+| 8 | CAND_0064326 | 0.6611 | 0.732 | Search Engineer |
+| 9 | CAND_0046064 | 0.6535 | 0.800 | Senior NLP Engineer |
+| 10 | CAND_0041669 | 0.6532 | 0.684 | Recommendation Systems Engineer |
+
+All top 10 are Recommendation Systems Engineers, Senior ML/NLP Engineers, or Search Engineers — exactly what the JD requires. Zero keyword stuffers. Zero wrong-domain candidates.
 
 ---
 
@@ -117,31 +141,12 @@ Result: 108 honeypots removed, zero honeypots in top 100.
 | Metric | Result | Requirement |
 |--------|--------|-------------|
 | Candidates processed | 100,000 | 100,000 |
-| Honeypots removed | 108 | ~80 expected |
-| Runtime | 90–120 seconds (CPU, varies by machine) | Under 5 minutes |
+| Honeypots removed | 108 | — |
+| Runtime | 105 seconds on CPU | Under 5 minutes |
 | GPU used | None | CPU only |
 | Network calls during ranking | None | Not allowed |
-| Memory usage | Under 4 GB RAM | Under 16 GB |
-| Test suite | 37/37 passing | Must pass |
-
----
-
-## Top 10 Results on Full 100k Dataset
-
-| Rank | Candidate ID | Score | Title |
-|------|-------------|-------|-------|
-| 1 | CAND_0000031 | 0.7780 | Recommendation Systems Engineer @ Swiggy |
-| 2 | CAND_0036184 | 0.7646 | Recommendation Systems Engineer |
-| 3 | CAND_0046525 | 0.7466 | Senior ML Engineer |
-| 4 | CAND_0011687 | 0.6909 | Senior NLP Engineer |
-| 5 | CAND_0062247 | 0.6803 | AI Engineer @ Pinecone |
-| 6 | CAND_0017960 | 0.6789 | Recommendation Systems Engineer |
-| 7 | CAND_0014440 | 0.6616 | Recommendation Systems Engineer |
-| 8 | CAND_0064326 | 0.6611 | Search Engineer |
-| 9 | CAND_0046064 | 0.6535 | Senior NLP Engineer |
-| 10 | CAND_0041669 | 0.6532 | Recommendation Systems Engineer |
-
-All top 10 are Recommendation Systems Engineers, Senior ML/NLP Engineers, or Search Engineers — exactly what the JD requires. Zero keyword stuffers. Zero wrong-domain candidates.
+| Memory usage | Under 4 GB RAM | — |
+| Test suite | 37/37 passing | — |
 
 ---
 
@@ -150,41 +155,46 @@ All top 10 are Recommendation Systems Engineers, Senior ML/NLP Engineers, or Sea
 ```bash
 git clone https://github.com/janapati2005/redrob-ranker
 cd redrob-ranker
-pip install -r requirements.txt
+pip install sentence-transformers scikit-learn numpy pandas tqdm rank-bm25 streamlit
 ```
 
-Place `candidates.jsonl` in the `data/` folder (not included — 475 MB).
+Place `candidates.jsonl` in the `data/` folder (not included in repo — 475 MB).
 
 ---
 
 ## Usage
 
-Run on full dataset:
+**Run on full 100k dataset:**
 ```bash
 python src/rank.py --candidates candidates.jsonl --top 100
 ```
 
-Run on sample (50 candidates):
+**Run on sample (50 candidates):**
 ```bash
 python src/rank.py
 ```
 
-Skip semantic embeddings (faster baseline):
+**Skip semantic embeddings (faster baseline):**
 ```bash
 python src/rank.py --no-semantic
 ```
 
-Validate output:
+**Regenerate semantic scores for sandbox:**
+```bash
+python src/precompute_semantics.py
+```
+
+**Validate output CSV:**
 ```bash
 python validate_submission.py output/submission.csv
 ```
 
-Run test suite:
+**Run test suite:**
 ```bash
 python tests/run_all_tests.py
 ```
 
-Run sandbox locally:
+**Run sandbox locally:**
 ```bash
 streamlit run app.py
 ```
@@ -196,28 +206,30 @@ streamlit run app.py
 ```
 redrob-ranker/
 ├── data/
-│   └── sample_candidates.json      50-candidate test file
+│   ├── sample_candidates.json        50-candidate test file
+│   └── semantic_scores.json          Precomputed semantic scores (committed)
 ├── src/
-│   ├── loader.py                   Reads .json, .jsonl, .jsonl.gz
-│   ├── honeypot.py                 Fake profile detection
-│   ├── bm25_retriever.py           Stage 1 — BM25 text retrieval
-│   ├── embedder.py                 Stage 2 — Semantic scoring
-│   ├── features.py                 9-signal feature extraction
-│   ├── scorer.py                   Weighted scoring + availability multiplier
-│   ├── reasoner.py                 Per-candidate reasoning text
-│   └── rank.py                     Main pipeline entry point
+│   ├── loader.py                     Reads .json, .jsonl, .jsonl.gz
+│   ├── honeypot.py                   Fake profile detection
+│   ├── bm25_retriever.py             Stage 1 — BM25 text retrieval
+│   ├── embedder.py                   Stage 2 — Semantic scoring
+│   ├── features.py                   9-signal feature extraction
+│   ├── scorer.py                     Weighted scoring + availability multiplier
+│   ├── reasoner.py                   Per-candidate reasoning text
+│   ├── rank.py                       Main pipeline entry point
+│   └── precompute_semantics.py       Generates semantic_scores.json
 ├── tests/
-│   └── run_all_tests.py            37-check test suite
+│   └── run_all_tests.py              37-check automated test suite
 ├── output/
-│   └── submission.csv              100 ranked candidates
+│   └── submission.csv                Top 100 ranked candidates
 ├── .streamlit/
-│   └── config.toml                 Upload limit config
-├── app.py                          Streamlit sandbox
-├── requirements.txt                Python dependencies
-├── packages.txt                    System dependencies for Streamlit Cloud
-├── submission_metadata.yaml        Team info and approach summary
-├── validate_submission.py          Competition format validator
-└── README.md                       This file
+│   └── config.toml                   Upload size config
+├── app.py                            Streamlit live sandbox
+├── requirements.txt                  Cloud dependencies
+├── packages.txt                      System dependencies for Streamlit Cloud
+├── submission_metadata.yaml          Team info and methodology summary
+├── validate_submission.py            Competition format validator
+└── README.md                         This file
 ```
 
 ---
@@ -227,20 +239,12 @@ redrob-ranker/
 | Tool | Version | Purpose |
 |------|---------|---------|
 | Python | 3.11 | Core pipeline |
-| sentence-transformers | 3.0.1 | Semantic embeddings (local only) |
-| scikit-learn | 1.5.0 | Cosine similarity |
-| numpy | 1.26.4 | Numerical operations |
-| pandas | 2.2.2 | Data handling |
-| streamlit | 1.58.0 | Web sandbox |
-| rank-bm25 | 0.2.2 | BM25 text retrieval |
-
----
-
-## Live Sandbox
-
-https://redrob-ranker-hg7bjpsw4c6dzf6wixkbg8.streamlit.app
-
-Upload `sample_candidates.json` to see the full pipeline in action.
+| sentence-transformers | 3.0.1 | Semantic JD embeddings (all-MiniLM-L6-v2) |
+| scikit-learn | latest | Cosine similarity |
+| numpy | latest | Numerical operations |
+| pandas | latest | Data handling |
+| rank-bm25 | 0.2.2 | Stage 1 BM25 text retrieval |
+| streamlit | latest | Live sandbox |
 
 ---
 
@@ -251,6 +255,6 @@ Upload `sample_candidates.json` to see the full pipeline in action.
 | Hari Aditya Janapati | Team Lead | jhariaditya@gmail.com |
 | Vurinindi Navadeep Kumar Reddy | ML Engineer | navadeepv2005@gmail.com |
 
-GitHub: https://github.com/janapati2005/redrob-ranker
+**GitHub:** https://github.com/janapati2005/redrob-ranker
 
-AI tools declared: Claude was used for architecture discussion and code review. No candidate data was fed to any LLM during ranking. All scoring is done locally with no API calls.
+**AI tools declared:** Claude was used for architecture discussion and code review. No candidate data was fed to any LLM during ranking. All scoring is done locally with no API calls.
