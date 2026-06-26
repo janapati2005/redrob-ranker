@@ -6,7 +6,6 @@ import sys
 import gzip
 from pathlib import Path
 
-# Handle both src/ and root structure
 _root = Path(__file__).parent
 for _p in [_root / "src", _root]:
     if (_p / "loader.py").exists():
@@ -34,7 +33,6 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
 footer {visibility: hidden;}
 .stDeployButton {display: none;}
 header {visibility: hidden;}
-
 .hero {
     background: linear-gradient(135deg, #6d28d9 0%, #9333ea 50%, #db2777 100%);
     border-radius: 20px;
@@ -242,34 +240,31 @@ header {visibility: hidden;}
     min-width: 60px;
     text-align: right;
 }
-.sem-note {
-    background: #fff;
-    border: 1px solid #ede9fe;
-    border-left: 4px solid #9333ea;
-    border-radius: 0 10px 10px 0;
-    padding: 12px 16px;
-    font-size: 0.81rem;
-    color: #6b7280;
-    line-height: 1.6;
-    margin-bottom: 20px;
-}
 </style>
 """, unsafe_allow_html=True)
 
-# ── Hero ──────────────────────────────────────────────────────────────────────
+
+def load_precomputed_semantics():
+    """Load precomputed semantic scores from data/semantic_scores.json."""
+    path = _root / "data" / "semantic_scores.json"
+    if path.exists():
+        with open(path) as f:
+            return json.load(f)
+    return {}
+
+
 st.markdown("""
 <div class="hero">
     <div class="hero-badge">Team CrossSense &nbsp;·&nbsp; Redrob AI Hackathon 2026</div>
     <h1>Intelligent Candidate Ranker</h1>
     <p>
-        Upload any candidate pool and receive ranked shortlists in seconds.<br>
+        Upload any candidate pool and receive AI-powered ranked shortlists in seconds.<br>
         9-signal scoring &nbsp;·&nbsp; BM25 retrieval &nbsp;·&nbsp;
-        Honeypot detection &nbsp;·&nbsp; Per-candidate reasoning
+        Semantic JD matching &nbsp;·&nbsp; Honeypot detection
     </p>
 </div>
 """, unsafe_allow_html=True)
 
-# ── Step cards ────────────────────────────────────────────────────────────────
 c1, c2, c3 = st.columns(3, gap="medium")
 with c1:
     st.markdown("""<div class="step-card">
@@ -281,13 +276,13 @@ with c2:
     st.markdown("""<div class="step-card">
         <div class="step-icon">🧠</div>
         <div class="step-title">Analyze</div>
-        <div class="step-desc">BM25 text retrieval followed by 9-signal weighted behavioral scoring</div>
+        <div class="step-desc">BM25 retrieval followed by semantic embeddings and 9-signal weighted scoring</div>
     </div>""", unsafe_allow_html=True)
 with c3:
     st.markdown("""<div class="step-card">
         <div class="step-icon">🏆</div>
         <div class="step-title">Shortlist</div>
-        <div class="step-desc">Top candidates with signal breakdown, reasoning, and downloadable CSV</div>
+        <div class="step-desc">Top candidates with full signal breakdown, per-candidate reasoning, and downloadable CSV</div>
     </div>""", unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
@@ -355,37 +350,35 @@ if not uploaded_file:
         <div class="stat-box" style="margin-bottom:14px">
             <div class="stat-box-title">Availability Multiplier</div>
             <p style="font-size:0.81rem;color:#6b7280;line-height:1.65;margin:0">
-                Availability is not a direct signal weight — it scales the entire
-                base score up or down.<br><br>
+                Availability is not a direct signal weight — it scales the
+                entire base score up or down.<br><br>
                 <strong style="color:#1a1a2e">Formula:</strong><br>
                 Final = Base × (0.40 + 0.60 × availability)<br><br>
-                A technically perfect candidate who never responds to recruiters
-                scores 40% of their potential. The 0.40 floor ensures they are
-                never completely zeroed out.
+                A perfect candidate who never responds scores 40% of their
+                potential. The 0.40 floor ensures they are never zeroed out.
             </p>
         </div>
         <div class="stat-box" style="margin-bottom:14px">
             <div class="stat-box-title">Semantic JD Match</div>
             <p style="font-size:0.81rem;color:#6b7280;line-height:1.65;margin:0">
-                Uses <strong style="color:#1a1a2e">sentence-transformers
-                all-MiniLM-L6-v2</strong> to encode the full JD and each
-                candidate profile into 384-dimensional vectors. Cosine similarity
-                captures meaning-level alignment — "Information Retrieval
-                Engineer" and "Search Systems Engineer" score high similarity
-                even without shared keywords.
+                Uses <strong style="color:#1a1a2e">all-MiniLM-L6-v2</strong>
+                to encode the full JD and each candidate profile into
+                384-dimensional vectors. Cosine similarity captures meaning-level
+                alignment — "Information Retrieval Engineer" and "Search Systems
+                Engineer" score high similarity even without shared keywords.<br><br>
+                Scores are precomputed and loaded from cache for instant results.
             </p>
         </div>
         <div class="stat-box">
             <div class="stat-box-title">Honeypot Detection</div>
             <p style="font-size:0.81rem;color:#6b7280;line-height:1.65;margin:0">
-                Profiles with impossible data are removed before scoring.
-                Expert skill with zero months of usage, claimed experience
+                Profiles with impossible data are removed before scoring —
+                expert skill with zero months of usage, claimed experience
                 exceeding career history by 3+ years, or signal values outside
-                valid ranges.
+                valid ranges. 108 removed from the full 100k dataset.
             </p>
         </div>
-        <p style="color:#9ca3af;font-size:0.77rem;text-align:center;
-                   margin-top:14px">
+        <p style="color:#9ca3af;font-size:0.77rem;text-align:center;margin-top:14px">
             Upload <code>sample_candidates.json</code> to get started
         </p>
         """, unsafe_allow_html=True)
@@ -424,7 +417,7 @@ else:
         progress = st.progress(0, text="Scanning and filtering candidates...")
         clean, honeypots = filter_honeypots(candidates, verbose=False)
 
-        progress.progress(30, text="Stage 1 — BM25 text retrieval...")
+        progress.progress(25, text="Stage 1 — BM25 text retrieval...")
         try:
             from bm25_retriever import get_bm25_shortlist
             if len(clean) > BM25_K:
@@ -435,9 +428,17 @@ else:
         except Exception:
             shortlisted = clean
 
-        progress.progress(70, text="Stage 2 — Scoring all 9 signals...")
-        # On cloud, semantic=0 but scorer redistributes weights to keep total=100%
-        ranked = score_all(shortlisted, semantic_scores={})
+        # Load precomputed semantic scores — same scores as local pipeline
+        progress.progress(55, text="Stage 2 — Loading semantic scores...")
+        precomputed = load_precomputed_semantics()
+        semantic_scores = {
+            c["candidate_id"]: precomputed.get(c["candidate_id"], 0.0)
+            for c in shortlisted
+        }
+        has_semantics = any(v > 0 for v in semantic_scores.values())
+
+        progress.progress(75, text="Stage 3 — Scoring all 9 signals...")
+        ranked = score_all(shortlisted, semantic_scores=semantic_scores)
 
         TOP_N = min(10, len(ranked))
         top = ranked[:TOP_N]
@@ -455,17 +456,30 @@ else:
         progress.progress(100, text="Complete.")
         progress.empty()
 
-        # Semantic note
-        st.markdown("""
-        <div class="sem-note">
-            <strong style="color:#6d28d9">Sandbox mode:</strong>
-            Semantic JD matching (15% weight, sentence-transformers) requires
-            a local environment with PyTorch. On this cloud sandbox, that weight
-            is redistributed proportionally across the remaining 8 signals so
-            scores remain comparable. For full 9-signal rankings run
-            <code>python src/rank.py --candidates candidates.jsonl</code> locally.
-        </div>
-        """, unsafe_allow_html=True)
+        # Show semantic mode status
+        if has_semantics:
+            st.markdown("""
+            <div style="background:#f0fdf4;border:1px solid #bbf7d0;
+                        border-left:4px solid #16a34a;border-radius:0 10px 10px 0;
+                        padding:10px 16px;font-size:0.81rem;color:#166534;
+                        line-height:1.5;margin-bottom:20px">
+                <strong>Full 9-signal mode:</strong>
+                Semantic JD matching scores loaded from precomputed cache.
+                Results match the local pipeline exactly.
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown("""
+            <div style="background:#fff7ed;border:1px solid #fed7aa;
+                        border-left:4px solid #ea580c;border-radius:0 10px 10px 0;
+                        padding:10px 16px;font-size:0.81rem;color:#9a3412;
+                        line-height:1.5;margin-bottom:20px">
+                <strong>Note:</strong>
+                Semantic scores not found for this candidate pool.
+                Upload <code>sample_candidates.json</code> to see full
+                9-signal rankings with semantic scores.
+            </div>
+            """, unsafe_allow_html=True)
 
         # Metrics
         m1, m2, m3, m4, m5 = st.columns(5, gap="small")
@@ -487,14 +501,14 @@ else:
             unsafe_allow_html=True
         )
 
-        # Candidate cards — NOT auto-expanded
         for i, r in enumerate(top, 1):
-            cid  = r["candidate_id"]
-            c    = lookup[cid]
-            p    = c["profile"]
-            f    = r["features"]
-            rs   = c.get("redrob_signals", {})
-            rsn  = reasonings.get(cid, "")
+            cid       = r["candidate_id"]
+            c         = lookup[cid]
+            p         = c["profile"]
+            f         = r["features"]
+            rs        = c.get("redrob_signals", {})
+            rsn       = reasonings.get(cid, "")
+            sem_score = semantic_scores.get(cid, 0.0)
             avail_pct = int(f.get("availability", 0) * 100)
 
             with st.expander(
@@ -514,34 +528,36 @@ else:
                     </div>
                     """, unsafe_allow_html=True)
 
-                    # 8 signal bars (semantic excluded in cloud mode)
                     signals = [
                         ("🎯 Skill Match",
-                         f.get("skill_match",0),
+                         f.get("skill_match", 0),
                          "linear-gradient(90deg,#6d28d9,#9333ea)"),
                         ("💼 Career Trajectory",
-                         f.get("career_fit",0),
+                         f.get("career_fit", 0),
                          "linear-gradient(90deg,#9333ea,#db2777)"),
+                        ("🔗 Semantic JD Match",
+                         sem_score,
+                         "linear-gradient(90deg,#7c3aed,#6d28d9)"),
                         ("📅 Experience Fit",
-                         f.get("experience_fit",0),
+                         f.get("experience_fit", 0),
                          "linear-gradient(90deg,#059669,#34d399)"),
                         ("📍 Location Fit",
-                         f.get("location_fit",0),
+                         f.get("location_fit", 0),
                          "linear-gradient(90deg,#2563eb,#60a5fa)"),
                         ("📈 Platform Demand",
-                         f.get("platform_demand",0),
+                         f.get("platform_demand", 0),
                          "linear-gradient(90deg,#ea580c,#fb923c)"),
                         ("💻 GitHub Activity",
-                         f.get("github",0),
+                         f.get("github", 0),
                          "linear-gradient(90deg,#334155,#64748b)"),
                         ("🎓 Education Quality",
-                         f.get("education",0),
+                         f.get("education", 0),
                          "linear-gradient(90deg,#0284c7,#38bdf8)"),
                         ("✅ Profile Quality",
-                         f.get("profile_quality",0),
+                         f.get("profile_quality", 0),
                          "linear-gradient(90deg,#0d9488,#2dd4bf)"),
                         ("⚡ Availability",
-                         f.get("availability",0),
+                         f.get("availability", 0),
                          "linear-gradient(90deg,#d97706,#fbbf24)"),
                     ]
 
@@ -581,7 +597,7 @@ else:
                     notice_s = f"{notice} days" if notice != "—" else "—"
                     gh_s     = str(int(gh)) if gh != -1 else "Not linked"
                     otw_s    = "Open to work" if otw else "Not seeking"
-                    icr_s    = f"{int(icr*100)}%" if isinstance(icr,float) else "—"
+                    icr_s    = f"{int(icr*100)}%" if isinstance(icr, float) else "—"
 
                     st.markdown(f"""
                     <div class="stat-box">
@@ -622,12 +638,13 @@ else:
                     <div class="stat-box">
                         <div class="stat-box-title">Score Breakdown</div>
                         <div class="stat-row">
-                            <span class="stat-key">Availability %</span>
-                            <span class="stat-val">{avail_pct}%</span>
+                            <span class="stat-key">Semantic JD Match</span>
+                            <span class="stat-val">{int(sem_score*100)}%</span>
                         </div>
                         <div class="stat-row">
-                            <span class="stat-key">Availability Multiplier</span>
-                            <span class="stat-val">{r.get('multiplier',0):.3f}</span>
+                            <span class="stat-key">Availability</span>
+                            <span class="stat-val">{avail_pct}%
+                                → multiplier {r.get('multiplier',0):.3f}</span>
                         </div>
                         <div class="stat-row">
                             <span class="stat-key">Final Score</span>
@@ -652,12 +669,12 @@ else:
                     pills = ""
                     for s in skills:
                         clr = {
-                            "expert":       ("ede9fe","6d28d9"),
-                            "advanced":     ("fce7f3","be185d"),
-                            "intermediate": ("d1fae5","065f46"),
-                            "beginner":     ("f3f4f6","6b7280")
-                        }.get(s.get("proficiency","beginner"),
-                              ("f3f4f6","6b7280"))
+                            "expert":       ("ede9fe", "6d28d9"),
+                            "advanced":     ("fce7f3", "be185d"),
+                            "intermediate": ("d1fae5", "065f46"),
+                            "beginner":     ("f3f4f6", "6b7280")
+                        }.get(s.get("proficiency", "beginner"),
+                              ("f3f4f6", "6b7280"))
                         pills += (
                             f'<span class="skill-pill" '
                             f'style="background:#{clr[0]};color:#{clr[1]}">'
@@ -665,11 +682,10 @@ else:
                         )
                     st.markdown(pills, unsafe_allow_html=True)
 
-        # Download
         import csv, io as _io
         out = _io.StringIO()
         writer = csv.DictWriter(
-            out, fieldnames=["candidate_id","rank","score","reasoning"]
+            out, fieldnames=["candidate_id", "rank", "score", "reasoning"]
         )
         writer.writeheader()
         for i, r in enumerate(ranked[:100], 1):
